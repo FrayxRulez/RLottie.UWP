@@ -26,7 +26,7 @@ inline std::string from_wstring(const wchar_t* begin, size_t size) {
 				}
 			}
 
-			return nullptr;
+			return {};
 		}
 		result_len += 1 + (cur >= 0x80) + (cur >= 0x800);
 	}
@@ -70,9 +70,10 @@ inline std::string string_to_unmanaged(String^ str) {
 	return from_wstring(str->Data(), str->Length());
 }
 
-Animation^ Animation::LoadFromData(String^ jsonData) {
+Animation^ Animation::LoadFromData(String^ jsonData, String^ key) {
 	auto data = string_to_unmanaged(jsonData);
-	return ref new Animation(data);
+	auto cache = string_to_unmanaged(jsonData);
+	return ref new Animation(data, cache);
 }
 
 Animation^ Animation::LoadFromFile(String^ filePath) {
@@ -95,14 +96,16 @@ Animation^ Animation::LoadFromFile(String^ filePath) {
 			data = std::string(buffer, size);
 		}
 
-		return ref new Animation(data);
+		auto cache = string_to_unmanaged(filePath);
+
+		return ref new Animation(data, cache);
 	}
 
 	return nullptr;
 }
 
-Animation::Animation(std::string jsonData) {
-	auto animation = rlottie::Animation::loadFromData(jsonData, "data");
+Animation::Animation(std::string jsonData, std::string key) {
+	auto animation = rlottie::Animation::loadFromData(jsonData, key);
 
 	animation.swap(m_animation);
 }

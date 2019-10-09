@@ -10,7 +10,7 @@ namespace RLottie
     public ref class Animation sealed
     {
     public:
-		static Animation^ LoadFromData(String^ jsonData);
+		static Animation^ LoadFromData(String^ jsonData, String^ key);
 		static Animation^ LoadFromFile(String^ filePath);
 
 		Array<byte>^ RenderSync(int frameNo);
@@ -44,7 +44,7 @@ namespace RLottie
 		}
 
 	private:
-		Animation(std::string jsonData);
+		Animation(std::string jsonData, std::string key);
 
 		std::unique_ptr<rlottie::Animation> m_animation;
     };
