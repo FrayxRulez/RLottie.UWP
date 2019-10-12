@@ -3,8 +3,6 @@
 #include "rlottie.h"
 
 #include <string>
-#include <fstream>
-#include <streambuf>
 
 #include <gzip/decompress.hpp>
 #include <gzip/utils.hpp>
@@ -77,31 +75,33 @@ Animation^ Animation::LoadFromData(String^ jsonData, String^ key) {
 }
 
 Animation^ Animation::LoadFromFile(String^ filePath) {
-	std::ifstream t(filePath->Data(), std::ios::binary | std::ios::ate);
-	std::streamsize size = t.tellg();
-	t.seekg(0, std::ios::beg);
+	auto path = string_to_unmanaged(filePath);
 
-	char* buffer = static_cast<char*> (malloc(size));
-	if (t.read(buffer, size))
-	{
-		t.close();
-
-		std::string data;
-
-		bool compressed = gzip::is_compressed(buffer, size);
-		if (compressed) {
-			data = gzip::decompress(buffer, size);
-		}
-		else {
-			data = std::string(buffer, size);
-		}
-
-		auto cache = string_to_unmanaged(filePath);
-
-		return ref new Animation(data, cache);
+	FILE* file = fopen(path.c_str(), "rb");
+	if (file == NULL) {
+		return nullptr;
 	}
 
-	return nullptr;
+	fseek(file, 0, SEEK_END);
+	size_t length = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	char* buffer = (char*)malloc(length);
+	fread(buffer, 1, length, file);
+	fclose(file);
+
+	std::string data;
+
+	bool compressed = gzip::is_compressed(buffer, length);
+	if (compressed) {
+		data = gzip::decompress(buffer, length);
+	}
+	else {
+		data = std::string(buffer, length);
+	}
+
+	auto cache = string_to_unmanaged(filePath);
+
+	return ref new Animation(data, cache);
 }
 
 Animation::Animation(std::string jsonData, std::string key) {
