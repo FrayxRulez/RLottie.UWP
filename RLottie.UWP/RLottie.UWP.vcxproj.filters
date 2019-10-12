@@ -44,6 +44,9 @@
     <Filter Include="src\binding\c">
       <UniqueIdentifier>{0d992965-02a7-4a01-a613-419f024b2392}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lz4">
+      <UniqueIdentifier>{ab29540e-f373-4315-894d-bab24718b43b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -150,6 +153,10 @@
     <ClCompile Include="..\rlottie\src\binding\c\lottieanimation_capi.cpp">
       <Filter>src\binding\c</Filter>
     </ClCompile>
+    <ClCompile Include="..\lz4\lib\lz4.c">
+      <Filter>lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="CachedAnimation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -383,10 +390,16 @@
     <ClInclude Include="..\rlottie\inc\rlottiecommon.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\lz4\lib\lz4.h">
+      <Filter>lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="CachedAnimation.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S">
       <Filter>src\vector\pixman</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
