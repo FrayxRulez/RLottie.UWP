@@ -54,6 +54,14 @@ namespace RLottie
 			}
 		}
 
+
+
+		property bool IsCached {
+			bool get() {
+				return !createCache;
+			}
+		}
+
 	private:
 		CachedAnimation();
 
