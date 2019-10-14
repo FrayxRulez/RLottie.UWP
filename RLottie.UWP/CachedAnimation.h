@@ -12,7 +12,7 @@ namespace RLottie
 	public ref class CachedAnimation sealed : public IAnimation
 	{
 	public:
-		static CachedAnimation^ LoadFromFile(String^ filePath, bool precache);
+		static CachedAnimation^ LoadFromFile(String^ filePath, bool precache, bool limitFps);
 
 		virtual ~CachedAnimation() {
 			if (decompressBuffer != nullptr) {
@@ -70,6 +70,7 @@ namespace RLottie
 		int32_t fps = 30;
 		bool precache = false;
 		bool createCache = false;
+		bool limitFps = false;
 		std::string path;
 		std::string cacheFile;
 		uint8_t* decompressBuffer = nullptr;

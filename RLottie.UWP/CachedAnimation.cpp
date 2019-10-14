@@ -17,7 +17,7 @@ CachedAnimation::CachedAnimation() {
 
 }
 
-CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray data,*/ bool precache/*, jintArray colorReplacement*/) {
+CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray data,*/ bool precache/*, jintArray colorReplacement*/, bool limitFps) {
 	CachedAnimation^ info = ref new CachedAnimation();
 
 	//std::map<int32_t, int32_t> colors;
@@ -49,6 +49,7 @@ CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray dat
 		delete info;
 		return nullptr;
 	}
+	info->limitFps = limitFps;
 	info->precache = precache;
 	if (info->precache) {
 		info->cacheFile = info->path;
@@ -102,7 +103,7 @@ void CachedAnimation::CreateCache(int w, int h) {
 			rlottie::Surface surface((uint32_t*)pixels, (size_t)w, (size_t)h, (size_t)stride);
 			//int64_t time = ConnectionsManager::getInstance(0).getCurrentTimeMillis();
 			//int totalSize = 0;
-			int framesPerUpdate = info->fps < 60 ? 1 : 2;
+			int framesPerUpdate = info->limitFps ? info->fps < 60 ? 1 : 2 : 1;
 			for (size_t a = 0; a < info->frameCount; a += framesPerUpdate) {
 				info->animation->renderSync(a, surface);
 				size = (uint32_t)LZ4_compress_default((const char*)pixels, (char*)compressBuffer, w * h * 4, bound);
@@ -157,7 +158,7 @@ Array<byte>^ CachedAnimation::RenderSync(int frame, int w, int h) {
 				loadedFromCache = true;
 			}
 			fclose(precacheFile);
-			int framesPerUpdate = info->fps < 60 ? 1 : 2;
+			int framesPerUpdate = info->limitFps ? info->fps < 60 ? 1 : 2 : 1;
 			if (frame + framesPerUpdate >= info->frameCount) {
 				info->fileOffset = 9;
 			}
