@@ -67,7 +67,7 @@ namespace RLottie
 		}
 
 	private:
-		Animation(std::string jsonData, std::string key);
+		Animation(std::unique_ptr<rlottie::Animation> * animation);
 
 		std::unique_ptr<rlottie::Animation> m_animation;
     };

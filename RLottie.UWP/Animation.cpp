@@ -9,20 +9,32 @@ using namespace Platform::Collections;
 
 Animation^ Animation::LoadFromData(String^ jsonData, String^ key) {
 	auto data = string_to_unmanaged(jsonData);
-	auto cache = string_to_unmanaged(jsonData);
-	return ref new Animation(data, cache);
+	auto cache = string_to_unmanaged(key);
+
+	auto animation = rlottie::Animation::loadFromData(data, cache);
+
+	if (animation != nullptr) {
+		return ref new Animation(&animation);
+	}
+
+	return nullptr;
 }
 
 Animation^ Animation::LoadFromFile(String^ filePath) {
 	auto data = DecompressFromFile(filePath);
 	auto cache = string_to_unmanaged(filePath);
-	return ref new Animation(data, cache);
+
+	auto animation = rlottie::Animation::loadFromData(data, cache);
+
+	if (animation != nullptr) {
+		return ref new Animation(&animation);
+	}
+
+	return nullptr;
 }
 
-Animation::Animation(std::string jsonData, std::string key) {
-	auto animation = rlottie::Animation::loadFromData(jsonData, key);
-
-	animation.swap(m_animation);
+Animation::Animation(std::unique_ptr<rlottie::Animation> * animation) {
+	animation->swap(m_animation);
 }
 
 Array<byte>^ Animation::RenderSync(int frameNo, int width, int height) {
