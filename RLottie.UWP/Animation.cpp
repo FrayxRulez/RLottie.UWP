@@ -11,7 +11,14 @@ Animation^ Animation::LoadFromData(String^ jsonData, String^ key) {
 	auto data = string_to_unmanaged(jsonData);
 	auto cache = string_to_unmanaged(key);
 
-	auto animation = rlottie::Animation::loadFromData(data, cache);
+	std::unique_ptr<rlottie::Animation> animation;
+
+	try {
+		animation = rlottie::Animation::loadFromData(data, cache);
+	}
+	catch (...) {
+
+	}
 
 	if (animation != nullptr) {
 		return ref new Animation(&animation);
@@ -24,7 +31,14 @@ Animation^ Animation::LoadFromFile(String^ filePath) {
 	auto data = DecompressFromFile(filePath);
 	auto cache = string_to_unmanaged(filePath);
 
-	auto animation = rlottie::Animation::loadFromData(data, cache);
+	std::unique_ptr<rlottie::Animation> animation;
+
+	try {
+		animation = rlottie::Animation::loadFromData(data, cache);
+	}
+	catch (...) {
+
+	}
 
 	if (animation != nullptr) {
 		return ref new Animation(&animation);

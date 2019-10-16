@@ -35,7 +35,13 @@ CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray dat
 	auto srcString = string_to_unmanaged(filePath);
 	auto data = DecompressFromFile(filePath);
 	info->path = srcString;
-	info->animation = rlottie::Animation::loadFromData(data, srcString/*, colors*/);
+
+	try {
+		info->animation = rlottie::Animation::loadFromData(data, srcString/*, colors*/);
+	}
+	catch (...) {
+
+	}
 	//if (srcString != 0) {
 	//	env->ReleaseStringUTFChars(src, srcString);
 	//}
@@ -45,7 +51,7 @@ CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray dat
 	}
 	info->frameCount = info->animation->totalFrame();
 	info->fps = (int)info->animation->frameRate();
-	if (info->fps > 60 || info->frameCount > 600) {
+	if (info->fps > 60 || info->frameCount > 600 || info->frameCount <= 0) {
 		delete info;
 		return nullptr;
 	}
@@ -88,9 +94,9 @@ void CachedAnimation::CreateCache(int w, int h) {
 		}
 	}
 
-	void* pixels;
-	pixels = static_cast<std::uint32_t*> (malloc(w * h * 4));
 	if (info->nextFrameIsCacheFrame && info->createCache && info->frameCount != 0 && w * 4 == stride /*&& AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0*/) {
+		void* pixels;
+		pixels = static_cast<std::uint32_t*> (malloc(w * h * 4));
 		precacheFile = fopen(info->cacheFile.c_str(), "w+");
 		if (precacheFile != nullptr) {
 			fseek(precacheFile, info->fileOffset = 9, SEEK_SET);
@@ -132,6 +138,7 @@ void CachedAnimation::CreateCache(int w, int h) {
 			fclose(precacheFile);
 		}
 		//AndroidBitmap_unlockPixels(env, bitmap);
+		delete[] pixels;
 	}
 }
 
