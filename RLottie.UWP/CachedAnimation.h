@@ -3,6 +3,9 @@
 #include "rlottie.h"
 #include "Animation.h"
 
+#define CACHED_VERSION 2
+#define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t)
+
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Microsoft::Graphics::Canvas;
@@ -67,6 +70,7 @@ namespace RLottie
 
 		std::unique_ptr<rlottie::Animation> animation;
 		size_t frameCount = 0;
+		int32_t frameIndex = 0;
 		int32_t fps = 30;
 		bool precache = false;
 		bool createCache = false;
