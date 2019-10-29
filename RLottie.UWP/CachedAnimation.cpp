@@ -32,11 +32,10 @@ CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray dat
 	//	}
 	//}
 
-	auto srcString = string_to_unmanaged(filePath);
-	auto data = DecompressFromFile(filePath);
-	info->path = srcString;
-
 	try {
+		auto data = DecompressFromFile(filePath);
+		auto cache = string_to_unmanaged(filePath);
+		info->path = cache;
 		info->animation = rlottie::Animation::loadFromData(data, srcString/*, colors*/);
 	}
 	catch (...) {

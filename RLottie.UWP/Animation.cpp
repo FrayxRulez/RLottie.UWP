@@ -8,12 +8,11 @@ using namespace Platform;
 using namespace Platform::Collections;
 
 Animation^ Animation::LoadFromData(String^ jsonData, String^ key) {
-	auto data = string_to_unmanaged(jsonData);
-	auto cache = string_to_unmanaged(key);
-
 	std::unique_ptr<rlottie::Animation> animation;
 
 	try {
+		auto data = string_to_unmanaged(jsonData);
+		auto cache = string_to_unmanaged(key);
 		animation = rlottie::Animation::loadFromData(data, cache);
 	}
 	catch (...) {
@@ -28,12 +27,11 @@ Animation^ Animation::LoadFromData(String^ jsonData, String^ key) {
 }
 
 Animation^ Animation::LoadFromFile(String^ filePath) {
-	auto data = DecompressFromFile(filePath);
-	auto cache = string_to_unmanaged(filePath);
-
 	std::unique_ptr<rlottie::Animation> animation;
 
 	try {
+		auto data = DecompressFromFile(filePath);
+		auto cache = string_to_unmanaged(filePath);
 		animation = rlottie::Animation::loadFromData(data, cache);
 	}
 	catch (...) {
