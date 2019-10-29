@@ -10,8 +10,6 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-        <xaml:CanvasAnimatedControl x:Name="Canvas" Paused="True" Draw="CanvasControl_Draw" CreateResources="Canvas_CreateResources" Width="256" Height="256"/>
-
         <Button Click="Button_Click">Load</Button>
         <Button Click="Button2_Click" VerticalAlignment="Bottom">Unload</Button>
     </Grid>
