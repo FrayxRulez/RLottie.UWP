@@ -11,6 +11,5 @@
 
     <Grid>
         <Button Click="Button_Click">Load</Button>
-        <Button Click="Button2_Click" VerticalAlignment="Bottom">Unload</Button>
     </Grid>
 </Page>
