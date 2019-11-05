@@ -4,3 +4,6 @@
 [submodule "lz4"]
 	path = lz4
 	url = https://github.com/lz4/lz4.git
+[submodule "rlottie"]
+	path = rlottie
+	url = https://github.com/Samsung/rlottie.git

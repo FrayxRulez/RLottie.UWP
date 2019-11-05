@@ -36,7 +36,7 @@ CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray dat
 		auto data = DecompressFromFile(filePath);
 		auto cache = string_to_unmanaged(filePath);
 		info->path = cache;
-		info->animation = rlottie::Animation::loadFromData(data, srcString/*, colors*/);
+		info->animation = rlottie::Animation::loadFromData(data, cache/*, colors*/);
 	}
 	catch (...) {
 
