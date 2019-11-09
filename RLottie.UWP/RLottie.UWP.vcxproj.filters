@@ -59,9 +59,6 @@
     <ClCompile Include="..\rlottie\src\vector\freetype\v_ft_stroker.cpp">
       <Filter>src\vector\freetype</Filter>
     </ClCompile>
-    <ClCompile Include="..\rlottie\src\vector\pixman\vregion.cpp">
-      <Filter>src\vector\pixman</Filter>
-    </ClCompile>
     <ClCompile Include="..\rlottie\src\vector\vbezier.cpp">
       <Filter>src\vector</Filter>
     </ClCompile>
@@ -157,6 +154,9 @@
       <Filter>lz4</Filter>
     </ClCompile>
     <ClCompile Include="CachedAnimation.cpp" />
+    <ClCompile Include="..\rlottie\src\vector\varenaalloc.cpp">
+      <Filter>src\vector</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -173,9 +173,6 @@
       <Filter>src\vector\freetype</Filter>
     </ClInclude>
     <ClInclude Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.h">
-      <Filter>src\vector\pixman</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rlottie\src\vector\pixman\vregion.h">
       <Filter>src\vector\pixman</Filter>
     </ClInclude>
     <ClInclude Include="..\rlottie\src\vector\vbezier.h">
@@ -395,6 +392,9 @@
     </ClInclude>
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="CachedAnimation.h" />
+    <ClInclude Include="..\rlottie\src\vector\varenaalloc.h">
+      <Filter>src\vector</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S">

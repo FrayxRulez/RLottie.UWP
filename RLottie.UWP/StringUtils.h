@@ -65,9 +65,7 @@ inline std::string string_to_unmanaged(String^ str) {
 }
 
 inline std::string DecompressFromFile(String^ filePath) {
-	auto path = string_to_unmanaged(filePath);
-
-	FILE* file = fopen(path.c_str(), "rb");
+	FILE* file = _wfopen(filePath->Data(), L"rb");
 	if (file == NULL) {
 		return nullptr;
 	}

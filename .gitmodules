@@ -1,9 +1,9 @@
+[submodule "rlottie"]
+	path = rlottie
+	url = https://github.com/FrayxRulez/rlottie.git
 [submodule "gzip-hpp"]
 	path = gzip-hpp
 	url = https://github.com/mapbox/gzip-hpp.git
 [submodule "lz4"]
 	path = lz4
 	url = https://github.com/lz4/lz4.git
-[submodule "rlottie"]
-	path = rlottie
-	url = https://github.com/Samsung/rlottie.git

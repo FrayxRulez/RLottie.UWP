@@ -343,8 +343,8 @@
     <ClInclude Include="..\rlottie\src\vector\freetype\v_ft_stroker.h" />
     <ClInclude Include="..\rlottie\src\vector\freetype\v_ft_types.h" />
     <ClInclude Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.h" />
-    <ClInclude Include="..\rlottie\src\vector\pixman\vregion.h" />
     <ClInclude Include="..\rlottie\src\vector\stb\stb_image.h" />
+    <ClInclude Include="..\rlottie\src\vector\varenaalloc.h" />
     <ClInclude Include="..\rlottie\src\vector\vbezier.h" />
     <ClInclude Include="..\rlottie\src\vector\vbitmap.h" />
     <ClInclude Include="..\rlottie\src\vector\vbrush.h" />
@@ -416,10 +416,10 @@
     <ClCompile Include="..\rlottie\src\vector\freetype\v_ft_stroker.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\rlottie\src\vector\pixman\vregion.cpp">
+    <ClCompile Include="..\rlottie\src\vector\stb\stb_image.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\rlottie\src\vector\stb\stb_image.cpp">
+    <ClCompile Include="..\rlottie\src\vector\varenaalloc.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\rlottie\src\vector\vbezier.cpp">

@@ -7,7 +7,9 @@
 #define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t)
 
 using namespace Platform;
+using namespace Platform::Collections;
 using namespace Windows::Foundation;
+using namespace Windows::Foundation::Collections;
 using namespace Microsoft::Graphics::Canvas;
 
 namespace RLottie
@@ -15,7 +17,7 @@ namespace RLottie
 	public ref class CachedAnimation sealed : public IAnimation
 	{
 	public:
-		static CachedAnimation^ LoadFromFile(String^ filePath, bool precache, bool limitFps);
+		static CachedAnimation^ LoadFromFile(String^ filePath, bool precache, bool limitFps, IMapView<uint32, uint32>^ colorReplacement);
 
 		virtual ~CachedAnimation() {
 			if (decompressBuffer != nullptr) {
@@ -75,8 +77,8 @@ namespace RLottie
 		bool precache = false;
 		bool createCache = false;
 		bool limitFps = false;
-		std::string path;
-		std::string cacheFile;
+		std::wstring path;
+		std::wstring cacheFile;
 		uint8_t* decompressBuffer = nullptr;
 		uint32_t maxFrameSize = 0;
 		uint32_t imageSize = 0;

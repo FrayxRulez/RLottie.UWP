@@ -11,32 +11,39 @@
 using namespace RLottie;
 using namespace Platform;
 using namespace Platform::Collections;
+using namespace Windows::Foundation::Collections;
 using namespace Microsoft::Graphics::Canvas;
 
 CachedAnimation::CachedAnimation() {
 
 }
 
-CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray data,*/ bool precache/*, jintArray colorReplacement*/, bool limitFps) {
+CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, bool precache, bool limitFps, IMapView<uint32, uint32>^ colorReplacement) {
 	CachedAnimation^ info = ref new CachedAnimation();
 
-	//std::map<int32_t, int32_t> colors;
-	//if (colorReplacement != nullptr) {
-	//	jint* arr = env->GetIntArrayElements(colorReplacement, 0);
-	//	if (arr != nullptr) {
-	//		jsize len = env->GetArrayLength(colorReplacement);
-	//		for (int32_t a = 0; a < len / 2; a++) {
-	//			colors[arr[a * 2]] = arr[a * 2 + 1];
-	//		}
-	//		env->ReleaseIntArrayElements(colorReplacement, arr, 0);
-	//	}
-	//}
+	long hash;
+	std::vector<std::pair<std::uint32_t, std::uint32_t>> colors;
+	if (colorReplacement != nullptr) {
+		for (auto&& elem : colorReplacement)
+		{
+			colors.push_back({ elem->Key, elem->Value });
+
+			hash = ((hash * 20261) + 0x80000000L + elem->Key) % 0x80000000L;
+			hash = ((hash * 20261) + 0x80000000L + elem->Value) % 0x80000000L;
+		}
+	}
 
 	try {
 		auto data = DecompressFromFile(filePath);
 		auto cache = string_to_unmanaged(filePath);
-		info->path = cache;
-		info->animation = rlottie::Animation::loadFromData(data, cache/*, colors*/);
+
+		if (hash != 0) {
+			cache += ".";
+			cache += std::to_string(abs(hash));
+		}
+
+		info->path = filePath->Data();
+		info->animation = rlottie::Animation::loadFromData(data, cache, "", true, colors);
 	}
 	catch (...) {
 
@@ -58,8 +65,14 @@ CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, /*jintArray dat
 	info->precache = precache;
 	if (info->precache) {
 		info->cacheFile = info->path;
-		info->cacheFile += ".cache";
-		FILE* precacheFile = fopen(info->cacheFile.c_str(), "r+b");
+
+		if (hash != 0) {
+			info->cacheFile += L".";
+			info->cacheFile += std::to_wstring(abs(hash));
+		}
+
+		info->cacheFile += L".cache";
+		FILE* precacheFile = _wfopen(info->cacheFile.c_str(), L"r+b");
 		if (precacheFile == nullptr) {
 			info->createCache = true;
 		}
@@ -83,7 +96,7 @@ void CachedAnimation::CreateCache(int w, int h) {
 	int stride = w * 4;
 	CachedAnimation^ info = this;
 
-	FILE* precacheFile = fopen(info->cacheFile.c_str(), "r+b");
+	FILE* precacheFile = _wfopen(info->cacheFile.c_str(), L"r+b");
 	if (precacheFile != nullptr) {
 		uint8_t temp;
 		size_t read = fread(&temp, sizeof(uint8_t), 1, precacheFile);
@@ -95,7 +108,7 @@ void CachedAnimation::CreateCache(int w, int h) {
 
 	if (info->nextFrameIsCacheFrame && info->createCache && info->frameCount != 0 && w * 4 == stride /*&& AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0*/) {
 		void* pixels = malloc(w * h * 4);
-		precacheFile = fopen(info->cacheFile.c_str(), "w+b");
+		precacheFile = _wfopen(info->cacheFile.c_str(), L"w+b");
 		if (precacheFile != nullptr) {
 			fseek(precacheFile, info->fileOffset = CACHED_HEADER_SIZE, SEEK_SET);
 
@@ -143,7 +156,7 @@ Array<byte>^ CachedAnimation::RenderSync(int frame, int w, int h) {
 	void* pixels = malloc(w * h * 4);
 	bool loadedFromCache = false;
 	if (info->precache && !info->createCache && w * 4 == stride && info->maxFrameSize <= w * h * 4 && info->imageSize == w * h * 4) {
-		FILE* precacheFile = fopen(info->cacheFile.c_str(), "rb");
+		FILE* precacheFile = _wfopen(info->cacheFile.c_str(), L"rb");
 		if (precacheFile != nullptr) {
 			fseek(precacheFile, info->fileOffset, SEEK_SET);
 			if (info->decompressBuffer == nullptr) {
