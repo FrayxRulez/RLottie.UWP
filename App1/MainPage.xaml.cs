@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Unigram.Controls;
 using Windows.ApplicationModel;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -33,71 +34,37 @@ namespace App1
             this.InitializeComponent();
         }
 
-        private RLottie.Animation _json;
-        private CanvasBitmap[] _frames;
-        private int _index;
+        private int index = 0;
+        private string[] _stickers = new string[]
+        {
+            "1258816259753938",
+            "WalletIntroLoading",
+            "2026484562321736022"
+        };
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            var watch1 = Stopwatch.StartNew();
+            try
+            {
+                var file = await Package.Current.InstalledLocation.GetFileAsync($"{_stickers[index]}.tgs");
+                var result = await file.CopyAsync(ApplicationData.Current.LocalFolder, file.Name, NameCollisionOption.FailIfExists);
+            }
+            catch { }
 
-            var uri = new Uri("file:///" + @"C:\Users\Рома\AppData\Local\Packages\38833FF26BA1D.UnigramPreview_g9c9v27vpyspw\LocalState\0\stickers\1220028319907446914.tgs");
-            var path = UriToPath(uri);
+            var player = new LottieView
+            {
+                Width = 200,
+                Height = 200,
+                Source = new Uri($"ms-appdata://local/{_stickers[index]}.tgs")
+            };
 
-            var test = Decompress("1258816259753938.tgs");
+            Panel.Children.Add(player);
 
-            _json = RLottie.Animation.LoadFromFile("1258816259753938.tgs");
-            _frames = new CanvasBitmap[_json.TotalFrame];
+            index = (index + 1) % _stickers.Length;
         }
 
-        private string UriToPath(Uri uri)
+        private void Button2_Click(object sender, RoutedEventArgs e)
         {
-            if (uri == null)
-            {
-                return null;
-            }
-
-            switch (uri.Scheme)
-            {
-                case "ms-appx":
-                    return Path.Combine(uri.Segments.Select(x => x.Trim('/')).ToArray());
-                case "ms-appdata":
-                    switch (uri.Host)
-                    {
-                        case "local":
-                            return Path.Combine(new[] { ApplicationData.Current.LocalFolder.Path }.Union(uri.Segments.Select(x => x.Trim('/'))).ToArray());
-                        case "temp":
-                            return Path.Combine(new[] { ApplicationData.Current.TemporaryFolder.Path }.Union(uri.Segments.Select(x => x.Trim('/'))).ToArray());
-                    }
-                    break;
-                case "file":
-                    return uri.LocalPath;
-            }
-
-            return null;
-        }
-
-
-        private string Decompress(string path)
-        {
-            string text;
-            using (var stream = File.OpenRead(path))
-            {
-                var decompressedFileStream = new System.IO.MemoryStream();
-                using (var decompressionStream = new GZipStream(stream, CompressionMode.Decompress))
-                {
-                    decompressionStream.CopyTo(decompressedFileStream);
-                }
-
-                decompressedFileStream.Seek(0, SeekOrigin.Begin);
-
-                using (var reader = new StreamReader(decompressedFileStream))
-                {
-                    text = reader.ReadToEnd();
-                }
-            }
-
-            return text;
         }
     }
 }
