@@ -21,7 +21,7 @@ CachedAnimation::CachedAnimation() {
 CachedAnimation^ CachedAnimation::LoadFromFile(String^ filePath, bool precache, bool limitFps, IMapView<uint32, uint32>^ colorReplacement) {
 	CachedAnimation^ info = ref new CachedAnimation();
 
-	long hash;
+	long hash = 0;
 	std::vector<std::pair<std::uint32_t, std::uint32_t>> colors;
 	if (colorReplacement != nullptr) {
 		for (auto&& elem : colorReplacement)
