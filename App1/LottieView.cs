@@ -221,7 +221,7 @@ namespace Unigram.Controls
         {
             //if (cache)
             {
-                return CachedAnimation.LoadFromFile(path, true, _limitFps);
+                return CachedAnimation.LoadFromFile(path, true, _limitFps, null);
             }
 
             return Animation.LoadFromFile(path);
