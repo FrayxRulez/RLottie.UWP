@@ -3,6 +3,8 @@
 #include "StringUtils.h"
 #include "rlottie.h"
 
+#include <wrl/wrappers/corewrappers.h>
+
 #include <string>
 #include <minmax.h>
 
@@ -13,6 +15,8 @@ using namespace Platform;
 using namespace Platform::Collections;
 using namespace Windows::Foundation::Collections;
 using namespace Microsoft::Graphics::Canvas;
+using namespace Microsoft::WRL;
+using namespace Microsoft::WRL::Wrappers;
 
 CachedAnimation::CachedAnimation() {
 
@@ -193,12 +197,56 @@ Array<byte>^ CachedAnimation::RenderSync(int frame, int w, int h) {
 	return res;
 }
 
-CanvasBitmap^ CachedAnimation::RenderSync(ICanvasResourceCreator^ resourceCreator, int frame, int width, int height) {
-	auto bytes = RenderSync(frame, width, height);
+CanvasBitmap^ CachedAnimation::RenderSync(ICanvasResourceCreator^ resourceCreator, int frame, int w, int h) {
+	int stride = w * 4;
+	CachedAnimation^ info = this;
+	void* pixels = malloc(w * h * 4);
+	bool loadedFromCache = false;
+	if (info->precache && !info->createCache && w * 4 == stride && info->maxFrameSize <= w * h * 4 && info->imageSize == w * h * 4) {
+		FILE* precacheFile = _wfopen(info->cacheFile.c_str(), L"rb");
+		if (precacheFile != nullptr) {
+			fseek(precacheFile, info->fileOffset, SEEK_SET);
+			if (info->decompressBuffer == nullptr) {
+				info->decompressBuffer = new uint8_t[info->maxFrameSize];
+			}
+			uint32_t frameSize;
+			fread(&frameSize, sizeof(uint32_t), 1, precacheFile);
+			if (frameSize <= info->maxFrameSize) {
+				fread(info->decompressBuffer, sizeof(uint8_t), frameSize, precacheFile);
+				info->fileOffset += sizeof(uint32_t) + frameSize;
+				LZ4_decompress_safe((const char*)info->decompressBuffer, (char*)pixels, frameSize, w * h * 4);
+				loadedFromCache = true;
+			}
+			fclose(precacheFile);
+			int framesPerUpdate = info->limitFps ? info->fps < 60 ? 1 : 2 : 1;
+			if (info->frameIndex + framesPerUpdate >= info->frameCount) {
+				info->fileOffset = CACHED_HEADER_SIZE;
+				info->frameIndex = 0;
+			}
+			else {
+				info->frameIndex += framesPerUpdate;
+			}
+		}
+	}
 
-	// Would probably make sense to use ABI here, but I have no idea about how to
-	auto bitmap = CanvasBitmap::CreateFromBytes(resourceCreator, bytes, width, height, Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized);
-	delete[] bytes;
+	if (!loadedFromCache) {
+		rlottie::Surface surface((uint32_t*)pixels, (size_t)w, (size_t)h, (size_t)stride);
+		info->animation->renderSync((size_t)frame, surface);
+		info->nextFrameIsCacheFrame = true;
+	}
 
-	return bitmap;
+	ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasResourceCreator> resourceCreatorAbi;
+	auto unknown = reinterpret_cast<IUnknown*>(resourceCreator);
+	unknown->QueryInterface(IID_PPV_ARGS(&resourceCreatorAbi));
+
+	ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmapStatics> canvasBitmapStatics;
+	auto result = GetActivationFactory(
+		HStringReference(RuntimeClass_Microsoft_Graphics_Canvas_CanvasBitmap).Get(),
+		&canvasBitmapStatics);
+
+	ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmap> bitmap;
+	result = canvasBitmapStatics->CreateFromBytes(resourceCreatorAbi.Get(), w * h * 4, (BYTE*)pixels, w, h, ABI::Windows::Graphics::DirectX::DirectXPixelFormat::DirectXPixelFormat_B8G8R8A8UIntNormalized, &bitmap);
+	delete[] pixels;
+
+	return reinterpret_cast<CanvasBitmap^>(bitmap.Get());
 }
