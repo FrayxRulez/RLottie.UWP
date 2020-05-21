@@ -235,18 +235,23 @@ CanvasBitmap^ CachedAnimation::RenderSync(ICanvasResourceCreator^ resourceCreato
 		info->nextFrameIsCacheFrame = true;
 	}
 
-	ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasResourceCreator> resourceCreatorAbi;
-	auto unknown = reinterpret_cast<IUnknown*>(resourceCreator);
-	unknown->QueryInterface(IID_PPV_ARGS(&resourceCreatorAbi));
+	if (bitmapFrame == nullptr) {
+		ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasResourceCreator> resourceCreatorAbi;
+		auto unknown = reinterpret_cast<IUnknown*>(resourceCreator);
+		unknown->QueryInterface(IID_PPV_ARGS(&resourceCreatorAbi));
 
-	ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmapStatics> canvasBitmapStatics;
-	auto result = GetActivationFactory(
-		HStringReference(RuntimeClass_Microsoft_Graphics_Canvas_CanvasBitmap).Get(),
-		&canvasBitmapStatics);
+		ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmapStatics> canvasBitmapStatics;
+		auto result = GetActivationFactory(
+			HStringReference(RuntimeClass_Microsoft_Graphics_Canvas_CanvasBitmap).Get(),
+			&canvasBitmapStatics);
 
-	ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmap> bitmap;
-	result = canvasBitmapStatics->CreateFromBytes(resourceCreatorAbi.Get(), w * h * 4, (BYTE*)pixels, w, h, ABI::Windows::Graphics::DirectX::DirectXPixelFormat::DirectXPixelFormat_B8G8R8A8UIntNormalized, &bitmap);
-	delete[] pixels;
+		result = canvasBitmapStatics->CreateFromBytes(resourceCreatorAbi.Get(), w * h * 4, (BYTE*)pixels, w, h, ABI::Windows::Graphics::DirectX::DirectXPixelFormat::DirectXPixelFormat_B8G8R8A8UIntNormalized, &bitmapFrame);
+		delete[] pixels;
+	}
+	else {
+		auto result = bitmapFrame->SetPixelBytes(w * h * 4, (BYTE*)pixels);
+		delete[] pixels;
+	}
 
-	return reinterpret_cast<CanvasBitmap^>(bitmap.Get());
+	return reinterpret_cast<CanvasBitmap^>(bitmapFrame.Get());
 }

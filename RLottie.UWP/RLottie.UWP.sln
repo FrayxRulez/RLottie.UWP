@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RLottie.UWP", "RLottie.UWP.vcxproj", "{00B63752-0CBA-42EE-9F51-F430B51A6F05}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RLottie", "RLottie.UWP.vcxproj", "{00B63752-0CBA-42EE-9F51-F430B51A6F05}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App1", "..\App1\App1.csproj", "{4417FB8C-F7E8-4D08-BA86-B3DB1CF496D1}"
 EndProject

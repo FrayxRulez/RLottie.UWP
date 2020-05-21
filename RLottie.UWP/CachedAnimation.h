@@ -11,6 +11,7 @@ using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Microsoft::Graphics::Canvas;
+using namespace Microsoft::WRL;
 
 namespace RLottie
 {
@@ -84,5 +85,7 @@ namespace RLottie
 		uint32_t imageSize = 0;
 		uint32_t fileOffset = 0;
 		bool nextFrameIsCacheFrame = false;
+
+		ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmap> bitmapFrame;
 	};
 }
