@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "CachedAnimation.h"
-//#include "CachedAnimation.g.cpp"
+#include "LottieAnimation.h"
+//#include "LottieAnimation.g.cpp"
 
 #include "StringUtils.h"
 #include "rlottie.h"
@@ -19,11 +19,9 @@ using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
 namespace winrt::RLottie::implementation
 {
-	RLottie::CachedAnimation CachedAnimation::LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
+	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
 	{
-		auto info = winrt::make_self<winrt::RLottie::implementation::CachedAnimation>();
-
-		//auto info = winrt::make_self<CachedAnimation>();
+		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 
 		long hash = 0;
 		std::vector<std::pair<std::uint32_t, std::uint32_t>> colors;
@@ -93,10 +91,10 @@ namespace winrt::RLottie::implementation
 			}
 		}
 
-		return info.as<RLottie::CachedAnimation>();
+		return info.as<RLottie::LottieAnimation>();
 	}
 
-	void CachedAnimation::CreateCache(int32_t w, int32_t h)
+	void LottieAnimation::CreateCache(int32_t w, int32_t h)
 	{
 		int stride = w * 4;
 
@@ -154,7 +152,7 @@ namespace winrt::RLottie::implementation
 		}
 	}
 
-	WriteableBitmap CachedAnimation::RenderSync(int32_t frame, int32_t w, int32_t h)
+	WriteableBitmap LottieAnimation::RenderSync(int32_t frame, int32_t w, int32_t h)
 	{
 		int stride = w * 4;
 		//void* pixels = malloc(w * h * 4);
@@ -197,7 +195,7 @@ namespace winrt::RLottie::implementation
 		return bitmap;
 	}
 
-	CanvasBitmap CachedAnimation::RenderSync(ICanvasResourceCreator resourceCreator, int32_t frame, int32_t w, int32_t h)
+	CanvasBitmap LottieAnimation::RenderSync(ICanvasResourceCreator resourceCreator, int32_t frame, int32_t w, int32_t h)
 	{
 		int stride = w * 4;
 		void* pixels = malloc(w * h * 4);
@@ -251,22 +249,22 @@ namespace winrt::RLottie::implementation
 
 #pragma region Properties
 
-	double CachedAnimation::Duration()
+	double LottieAnimation::Duration()
 	{
 		return animation->duration();
 	}
 
-	double CachedAnimation::FrameRate()
+	double LottieAnimation::FrameRate()
 	{
 		return animation->frameRate();
 	}
 
-	int32_t CachedAnimation::TotalFrame()
+	int32_t LottieAnimation::TotalFrame()
 	{
 		return animation->totalFrame();
 	}
 
-	winrt::Windows::Foundation::Size CachedAnimation::Size()
+	winrt::Windows::Foundation::Size LottieAnimation::Size()
 	{
 		size_t width;
 		size_t height;
@@ -275,7 +273,7 @@ namespace winrt::RLottie::implementation
 		return winrt::Windows::Foundation::Size(width, height);
 	}
 
-	bool CachedAnimation::ShouldCache()
+	bool LottieAnimation::ShouldCache()
 	{
 		return createCache;
 	}

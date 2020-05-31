@@ -1,9 +1,9 @@
 namespace RLottie
 {
     [default_interface]
-    runtimeclass CachedAnimation : Windows.Foundation.IClosable
+    runtimeclass LottieAnimation : Windows.Foundation.IClosable
     {
-        static CachedAnimation LoadFromFile(String filePath, Boolean precache, Boolean limitFps, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
+        static LottieAnimation LoadFromFile(String filePath, Boolean precache, Boolean limitFps, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
 
         void CreateCache(Int32 width, Int32 height);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CachedAnimation.g.h"
+#include "LottieAnimation.g.h"
 
 #include "rlottie.h"
 
@@ -15,14 +15,14 @@ using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
 namespace winrt::RLottie::implementation
 {
-	struct CachedAnimation : CachedAnimationT<CachedAnimation>
+	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
-		static RLottie::CachedAnimation LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
+		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
 
-		CachedAnimation() = default;
+		LottieAnimation() = default;
 
-		virtual ~CachedAnimation() {
+		virtual ~LottieAnimation() {
 			if (decompressBuffer != nullptr) {
 				delete[] decompressBuffer;
 				decompressBuffer = nullptr;
@@ -60,7 +60,7 @@ namespace winrt::RLottie::implementation
 		bool ShouldCache();
 
 	private:
-		//CachedAnimation();
+		//LottieAnimation();
 
 		std::unique_ptr<rlottie::Animation> animation;
 		size_t frameCount = 0;
@@ -83,7 +83,7 @@ namespace winrt::RLottie::implementation
 
 namespace winrt::RLottie::factory_implementation
 {
-	struct CachedAnimation : CachedAnimationT<CachedAnimation, implementation::CachedAnimation>
+	struct LottieAnimation : LottieAnimationT<LottieAnimation, implementation::LottieAnimation>
 	{
 	};
 }
