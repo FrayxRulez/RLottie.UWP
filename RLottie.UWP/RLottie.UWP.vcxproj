@@ -378,8 +378,8 @@
     <ClInclude Include="..\rlottie\src\vector\vsharedptr.h" />
     <ClInclude Include="..\rlottie\src\vector\vstackallocator.h" />
     <ClInclude Include="..\rlottie\src\vector\vtaskqueue.h" />
-    <ClInclude Include="CachedAnimation.h">
-      <DependentUpon>CachedAnimation.idl</DependentUpon>
+    <ClInclude Include="LottieAnimation.h">
+      <DependentUpon>LottieAnimation.idl</DependentUpon>
     </ClInclude>
     <ClInclude Include="config.h" />
     <ClInclude Include="pch.h" />
@@ -492,8 +492,8 @@
     <ClCompile Include="..\rlottie\src\vector\vrle.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="CachedAnimation.cpp">
-      <DependentUpon>CachedAnimation.idl</DependentUpon>
+    <ClCompile Include="LottieAnimation.cpp">
+      <DependentUpon>LottieAnimation.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -513,7 +513,7 @@
     <None Include="RLottie.def" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="CachedAnimation.idl" />
+    <Midl Include="LottieAnimation.idl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
