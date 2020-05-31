@@ -155,7 +155,6 @@
     <ClCompile Include="..\rlottie\src\vector\varenaalloc.cpp">
       <Filter>src\vector</Filter>
     </ClCompile>
-    <ClCompile Include="CachedAnimation.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -393,7 +392,6 @@
     <ClInclude Include="..\rlottie\src\vector\varenaalloc.h">
       <Filter>src\vector</Filter>
     </ClInclude>
-    <ClInclude Include="CachedAnimation.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S">
@@ -403,6 +401,6 @@
     <None Include="RLottie.def" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="CachedAnimation.idl" />
+    <Midl Include="LottieAnimation.idl" />
   </ItemGroup>
 </Project>
