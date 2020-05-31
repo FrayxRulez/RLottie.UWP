@@ -1,0 +1,19 @@
+namespace RLottie
+{
+    [default_interface]
+    runtimeclass CachedAnimation : Windows.Foundation.IClosable
+    {
+        static CachedAnimation LoadFromFile(String filePath, Boolean precache, Boolean limitFps, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
+
+        void CreateCache(Int32 width, Int32 height);
+
+        Windows.UI.Xaml.Media.ImageSource RenderSync(Int32 frame, Int32 width, Int32 height);
+        Microsoft.Graphics.Canvas.CanvasBitmap RenderSync(Microsoft.Graphics.Canvas.ICanvasResourceCreator resourceCreator, Int32 frame, Int32 width, Int32 height);
+
+        Double Duration { get; };
+        Double FrameRate { get; };
+        Int32 TotalFrame { get; };
+        Windows.Foundation.Size Size { get; };
+        Boolean ShouldCache { get; };
+    }
+}

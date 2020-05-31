@@ -5,8 +5,6 @@
 #include <gzip/decompress.hpp>
 #include <gzip/utils.hpp>
 
-using namespace Platform;
-
 inline std::string from_wstring(const wchar_t* begin, size_t size) {
 	size_t result_len = 0;
 	for (size_t i = 0; i < size; i++) {
@@ -57,15 +55,15 @@ inline std::string from_wstring(const wchar_t* begin, size_t size) {
 	return result;
 }
 
-inline std::string string_to_unmanaged(String^ str) {
-	if (!str) {
-		return std::string();
-	}
-	return from_wstring(str->Data(), str->Length());
+inline std::string string_to_unmanaged(winrt::hstring str) {
+	//if (!str) {
+	//	return std::string();
+	//}
+	return from_wstring(str.data(), str.size());
 }
 
-inline std::string DecompressFromFile(String^ filePath) {
-	FILE* file = _wfopen(filePath->Data(), L"rb");
+inline std::string DecompressFromFile(winrt::hstring filePath) {
+	FILE* file = _wfopen(filePath.c_str(), L"rb");
 	if (file == NULL) {
 		return nullptr;
 	}

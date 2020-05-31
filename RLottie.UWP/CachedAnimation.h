@@ -1,75 +1,66 @@
 #pragma once
 
+#include "CachedAnimation.g.h"
+
 #include "rlottie.h"
-#include "Animation.h"
+
+#include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
 #define CACHED_VERSION 2
 #define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t)
 
-using namespace Platform;
-using namespace Platform::Collections;
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-using namespace Microsoft::Graphics::Canvas;
-using namespace Microsoft::WRL;
+using namespace winrt;
+using namespace winrt::Microsoft::Graphics::Canvas;
+using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
-namespace RLottie
+namespace winrt::RLottie::implementation
 {
-	public ref class CachedAnimation sealed : public IAnimation
+	struct CachedAnimation : CachedAnimationT<CachedAnimation>
 	{
 	public:
-		static CachedAnimation^ LoadFromFile(String^ filePath, bool precache, bool limitFps, IMapView<uint32, uint32>^ colorReplacement);
+		static RLottie::CachedAnimation LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
+
+		CachedAnimation() = default;
 
 		virtual ~CachedAnimation() {
 			if (decompressBuffer != nullptr) {
 				delete[] decompressBuffer;
 				decompressBuffer = nullptr;
 			}
-		}
-
-		void CreateCache(int width, int height);
-
-		virtual Array<byte>^ RenderSync(int frame, int width, int height);
-		virtual CanvasBitmap^ RenderSync(ICanvasResourceCreator^ resourceCreator, int frame, int width, int height);
-
-		virtual property double Duration {
-			double get() {
-				return animation->duration();
+			if (bitmapFrame != nullptr) {
+				bitmapFrame.Close();
+				bitmapFrame = nullptr;
 			}
 		}
 
-		virtual property double FrameRate {
-			double get() {
-				return animation->frameRate();
+		void Close() {
+			if (decompressBuffer != nullptr) {
+				delete[] decompressBuffer;
+				decompressBuffer = nullptr;
+			}
+			if (bitmapFrame != nullptr) {
+				bitmapFrame.Close();
+				bitmapFrame = nullptr;
 			}
 		}
 
-		virtual property int TotalFrame {
-			int get() {
-				return animation->totalFrame();
-			}
-		}
+		void CreateCache(int32_t width, int32_t height);
 
-		virtual property Windows::Foundation::Size Size {
-			Windows::Foundation::Size get() {
-				size_t width;
-				size_t height;
-				animation->size(width, height);
+		WriteableBitmap RenderSync(int32_t frame, int32_t width, int32_t height);
+		CanvasBitmap RenderSync(ICanvasResourceCreator resourceCreator, int32_t frame, int32_t width, int32_t height);
 
-				return Windows::Foundation::Size(width, height);
-			}
-		}
+		double Duration();
 
+		double FrameRate();
 
+		int32_t TotalFrame();
 
-		property bool IsCached {
-			bool get() {
-				return !createCache;
-			}
-		}
+		winrt::Windows::Foundation::Size Size();
+
+		bool ShouldCache();
 
 	private:
-		CachedAnimation();
+		//CachedAnimation();
 
 		std::unique_ptr<rlottie::Animation> animation;
 		size_t frameCount = 0;
@@ -86,6 +77,13 @@ namespace RLottie
 		uint32_t fileOffset = 0;
 		bool nextFrameIsCacheFrame = false;
 
-		ComPtr<ABI::Microsoft::Graphics::Canvas::ICanvasBitmap> bitmapFrame;
+		CanvasBitmap bitmapFrame{ nullptr };
+	};
+}
+
+namespace winrt::RLottie::factory_implementation
+{
+	struct CachedAnimation : CachedAnimationT<CachedAnimation, implementation::CachedAnimation>
+	{
 	};
 }

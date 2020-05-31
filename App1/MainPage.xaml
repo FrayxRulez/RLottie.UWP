@@ -15,7 +15,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="controls:LottieView">
-                        <xaml:CanvasAnimatedControl x:Name="Canvas"/>
+                        <xaml:CanvasControl x:Name="Canvas"/>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -23,12 +23,16 @@
     </Page.Resources>
     
     <Grid>
-        <StackPanel x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <ScrollViewer>
+            <StackPanel x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image Width="256" Height="256" x:Name="Pic"/>
 
-            <!--<controls:LottieView Source="ms-appx:///1258816259753938.tgs" Width="200" Height="200"/>-->
-            <!--<controls:LottieView Source="ms-appx:///WalletIntroLoading.tgs" Width="200" Height="200"/>
-            <controls:LottieView Source="ms-appx:///2026484562321736022.tgs" Width="200" Height="200"/>-->
-        </StackPanel>
+
+                <!--<controls:LottieView Source="ms-appx:///1258816259753938.tgs" Width="200" Height="200"/>-->
+                <!--<controls:LottieView Source="ms-appx:///WalletIntroLoading.tgs" Width="200" Height="200"/>
+                <controls:LottieView Source="ms-appx:///2026484562321736022.tgs" Width="200" Height="200"/>-->
+            </StackPanel>
+        </ScrollViewer>
 
         <Button Click="Button_Click">Load</Button>
         <Button Click="Button2_Click" VerticalAlignment="Bottom">Unload</Button>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -150,7 +151,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>_WINRT_DLL;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;LOT_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINRT_DLL;WINRT_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;LOT_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
@@ -163,6 +164,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlibd.lib;msvcrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlibd;msvcrtd;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -181,6 +183,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlib.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlib;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
@@ -199,6 +202,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlibd.lib;msvcrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlibd;msvcrtd;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -217,6 +221,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlib.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlib;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -235,6 +240,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlibd.lib;msvcrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlibd;msvcrtd;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -253,6 +259,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlib.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlib;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -271,6 +278,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlibd.lib;msvcrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlibd;msvcrtd;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -289,6 +297,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>vccorlib.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>vccorlib;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>RLottie.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -369,10 +378,11 @@
     <ClInclude Include="..\rlottie\src\vector\vsharedptr.h" />
     <ClInclude Include="..\rlottie\src\vector\vstackallocator.h" />
     <ClInclude Include="..\rlottie\src\vector\vtaskqueue.h" />
-    <ClInclude Include="CachedAnimation.h" />
+    <ClInclude Include="CachedAnimation.h">
+      <DependentUpon>CachedAnimation.idl</DependentUpon>
+    </ClInclude>
     <ClInclude Include="config.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Animation.h" />
     <ClInclude Include="StringUtils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -482,7 +492,9 @@
     <ClCompile Include="..\rlottie\src\vector\vrle.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="CachedAnimation.cpp" />
+    <ClCompile Include="CachedAnimation.cpp">
+      <DependentUpon>CachedAnimation.idl</DependentUpon>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -493,20 +505,27 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S" />
     <None Include="packages.config" />
+    <None Include="RLottie.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="CachedAnimation.idl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\Win2D.uwp.1.25.0\build\native\Win2D.uwp.targets" Condition="Exists('packages\Win2D.uwp.1.25.0\build\native\Win2D.uwp.targets')" />
+    <Import Project="packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\Win2D.uwp.1.25.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Win2D.uwp.1.25.0\build\native\Win2D.uwp.targets'))" />
+    <Error Condition="!Exists('packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Windows.CppWinRT.2.0.200514.2\build\native\Microsoft.Windows.CppWinRT.targets'))" />
   </Target>
 </Project>

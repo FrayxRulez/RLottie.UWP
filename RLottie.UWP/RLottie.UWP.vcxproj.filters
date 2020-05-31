@@ -146,17 +146,17 @@
     <ClCompile Include="..\rlottie\src\lottie\lottiekeypath.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
-    <ClCompile Include="Animation.cpp" />
     <ClCompile Include="..\rlottie\src\binding\c\lottieanimation_capi.cpp">
       <Filter>src\binding\c</Filter>
     </ClCompile>
     <ClCompile Include="..\lz4\lib\lz4.c">
       <Filter>lz4</Filter>
     </ClCompile>
-    <ClCompile Include="CachedAnimation.cpp" />
     <ClCompile Include="..\rlottie\src\vector\varenaalloc.cpp">
       <Filter>src\vector</Filter>
     </ClCompile>
+    <ClCompile Include="CachedAnimation.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -377,7 +377,6 @@
     <ClInclude Include="..\rlottie\src\lottie\lottieitem.h">
       <Filter>src\lottie</Filter>
     </ClInclude>
-    <ClInclude Include="Animation.h" />
     <ClInclude Include="..\rlottie\inc\rlottie_capi.h">
       <Filter>inc</Filter>
     </ClInclude>
@@ -391,15 +390,19 @@
       <Filter>lz4</Filter>
     </ClInclude>
     <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="CachedAnimation.h" />
     <ClInclude Include="..\rlottie\src\vector\varenaalloc.h">
       <Filter>src\vector</Filter>
     </ClInclude>
+    <ClInclude Include="CachedAnimation.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S">
       <Filter>src\vector\pixman</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="RLottie.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="CachedAnimation.idl" />
   </ItemGroup>
 </Project>
