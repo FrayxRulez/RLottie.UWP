@@ -19,7 +19,7 @@ using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
 namespace winrt::RLottie::implementation
 {
-	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
+	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 
@@ -63,7 +63,6 @@ namespace winrt::RLottie::implementation
 			//delete info;
 			return nullptr;
 		}
-		info->limitFps = limitFps;
 		info->precache = precache;
 		if (info->precache) {
 			info->cacheFile = info->path;
@@ -83,9 +82,10 @@ namespace winrt::RLottie::implementation
 				size_t read = fread(&temp, sizeof(uint8_t), 1, precacheFile);
 				info->createCache = read != 1 || temp != CACHED_VERSION;
 				if (!info->createCache) {
-					fread(&(info->maxFrameSize), sizeof(uint32_t), 1, precacheFile);
-					fread(&(info->imageSize), sizeof(uint32_t), 1, precacheFile);
-					info->fileOffset = CACHED_HEADER_SIZE;
+					info->fileOffsets = std::vector<uint32_t>(info->frameCount, 0);
+					fread(&info->maxFrameSize, sizeof(uint32_t), 1, precacheFile);
+					fread(&info->imageSize, sizeof(uint32_t), 1, precacheFile);
+					fread(&info->fileOffsets[0], sizeof(uint32_t), info->frameCount, precacheFile);
 				}
 				fclose(precacheFile);
 			}
@@ -112,7 +112,8 @@ namespace winrt::RLottie::implementation
 			void* pixels = malloc(w * h * 4);
 			precacheFile = _wfopen(this->cacheFile.c_str(), L"w+b");
 			if (precacheFile != nullptr) {
-				fseek(precacheFile, this->fileOffset = CACHED_HEADER_SIZE, SEEK_SET);
+				uint32_t offset = CACHED_HEADER_SIZE + sizeof(uint32_t) * this->frameCount;
+				fseek(precacheFile, offset, SEEK_SET);
 
 				uint32_t size;
 				uint32_t firstFrameSize = 0;
@@ -120,8 +121,9 @@ namespace winrt::RLottie::implementation
 				int bound = LZ4_compressBound(w * h * 4);
 				uint8_t* compressBuffer = new uint8_t[bound];
 				rlottie::Surface surface((uint32_t*)pixels, (size_t)w, (size_t)h, (size_t)stride);
-				int framesPerUpdate = this->limitFps ? this->fps < 60 ? 1 : 2 : 1;
+				int framesPerUpdate = /*this->limitFps ? this->fps < 60 ? 1 : 2 :*/ 1;
 				int i = 0;
+				this->fileOffsets = std::vector<uint32_t>(this->frameCount, 0);
 				for (size_t a = 0; a < this->frameCount; a += framesPerUpdate) {
 					this->animation->renderSync(a, surface);
 					size = (uint32_t)LZ4_compress_default((const char*)pixels, (char*)compressBuffer, w * h * 4, bound);
@@ -130,8 +132,10 @@ namespace winrt::RLottie::implementation
 						firstFrameSize = size;
 					}
 					this->maxFrameSize = max(this->maxFrameSize, size);
+					this->fileOffsets[a] = offset;
 					fwrite(&size, sizeof(uint32_t), 1, precacheFile);
 					fwrite(compressBuffer, sizeof(uint8_t), size, precacheFile);
+					offset += sizeof(uint32_t) + size;
 				}
 				delete[] compressBuffer;
 				fseek(precacheFile, 0, SEEK_SET);
@@ -140,15 +144,14 @@ namespace winrt::RLottie::implementation
 				fwrite(&version, sizeof(uint8_t), 1, precacheFile);
 				fwrite(&this->maxFrameSize, sizeof(uint32_t), 1, precacheFile);
 				fwrite(&this->imageSize, sizeof(uint32_t), 1, precacheFile);
+				fwrite(&this->fileOffsets[0], sizeof(uint32_t), this->frameCount, precacheFile);
+
 				fflush(precacheFile);
-				//int fd = fileno(precacheFile);
-				//fsync(fd);
-				this->createCache = false;
-				this->fileOffset = CACHED_HEADER_SIZE + sizeof(uint32_t) + firstFrameSize;
 				fclose(precacheFile);
+				this->createCache = false;
 			}
 
-			delete[] pixels;
+			free(pixels);
 		}
 	}
 
@@ -162,7 +165,7 @@ namespace winrt::RLottie::implementation
 		if (this->precache && !this->createCache && w * 4 == stride && this->maxFrameSize <= w * h * 4 && this->imageSize == w * h * 4) {
 			FILE* precacheFile = _wfopen(this->cacheFile.c_str(), L"rb");
 			if (precacheFile != nullptr) {
-				fseek(precacheFile, this->fileOffset, SEEK_SET);
+				fseek(precacheFile, this->fileOffsets[frame], SEEK_SET);
 				if (this->decompressBuffer == nullptr) {
 					this->decompressBuffer = new uint8_t[this->maxFrameSize];
 				}
@@ -170,14 +173,12 @@ namespace winrt::RLottie::implementation
 				fread(&frameSize, sizeof(uint32_t), 1, precacheFile);
 				if (frameSize <= this->maxFrameSize) {
 					fread(this->decompressBuffer, sizeof(uint8_t), frameSize, precacheFile);
-					this->fileOffset += sizeof(uint32_t) + frameSize;
 					LZ4_decompress_safe((const char*)this->decompressBuffer, (char*)pixels, frameSize, w * h * 4);
 					loadedFromCache = true;
 				}
 				fclose(precacheFile);
-				int framesPerUpdate = this->limitFps ? this->fps < 60 ? 1 : 2 : 1;
+				int framesPerUpdate = /*this->limitFps ? this->fps < 60 ? 1 : 2 :*/ 1;
 				if (this->frameIndex + framesPerUpdate >= this->frameCount) {
-					this->fileOffset = CACHED_HEADER_SIZE;
 					this->frameIndex = 0;
 				}
 				else {
@@ -203,7 +204,7 @@ namespace winrt::RLottie::implementation
 		if (this->precache && !this->createCache && w * 4 == stride && this->maxFrameSize <= w * h * 4 && this->imageSize == w * h * 4) {
 			FILE* precacheFile = _wfopen(this->cacheFile.c_str(), L"rb");
 			if (precacheFile != nullptr) {
-				fseek(precacheFile, this->fileOffset, SEEK_SET);
+				fseek(precacheFile, this->fileOffsets[frame], SEEK_SET);
 				if (this->decompressBuffer == nullptr) {
 					this->decompressBuffer = new uint8_t[this->maxFrameSize];
 				}
@@ -211,14 +212,12 @@ namespace winrt::RLottie::implementation
 				fread(&frameSize, sizeof(uint32_t), 1, precacheFile);
 				if (frameSize <= this->maxFrameSize) {
 					fread(this->decompressBuffer, sizeof(uint8_t), frameSize, precacheFile);
-					this->fileOffset += sizeof(uint32_t) + frameSize;
 					LZ4_decompress_safe((const char*)this->decompressBuffer, (char*)pixels, frameSize, w * h * 4);
 					loadedFromCache = true;
 				}
 				fclose(precacheFile);
-				int framesPerUpdate = this->limitFps ? this->fps < 60 ? 1 : 2 : 1;
+				int framesPerUpdate = /*this->limitFps ? this->fps < 60 ? 1 : 2 :*/ 1;
 				if (this->frameIndex + framesPerUpdate >= this->frameCount) {
-					this->fileOffset = CACHED_HEADER_SIZE;
 					this->frameIndex = 0;
 				}
 				else {
@@ -237,11 +236,11 @@ namespace winrt::RLottie::implementation
 
 		if (bitmapFrame == nullptr) {
 			bitmapFrame = CanvasBitmap::CreateFromBytes(resourceCreator, data, w, h, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized);
-			delete[] pixels;
+			free(pixels);
 		}
 		else {
 			bitmapFrame.SetPixelBytes(data);
-			delete[] pixels;
+			free(pixels);
 		}
 
 		return bitmapFrame;

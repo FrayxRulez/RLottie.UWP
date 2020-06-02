@@ -6,7 +6,7 @@
 
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
-#define CACHED_VERSION 2
+#define CACHED_VERSION 3
 #define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t)
 
 using namespace winrt;
@@ -18,7 +18,7 @@ namespace winrt::RLottie::implementation
 	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
-		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, bool precache, bool limitFps, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
+		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
 
 		LottieAnimation() = default;
 
@@ -68,13 +68,12 @@ namespace winrt::RLottie::implementation
 		int32_t fps = 30;
 		bool precache = false;
 		bool createCache = false;
-		bool limitFps = false;
 		std::wstring path;
 		std::wstring cacheFile;
 		uint8_t* decompressBuffer = nullptr;
 		uint32_t maxFrameSize = 0;
 		uint32_t imageSize = 0;
-		uint32_t fileOffset = 0;
+		std::vector<uint32_t> fileOffsets;
 		bool nextFrameIsCacheFrame = false;
 
 		CanvasBitmap bitmapFrame{ nullptr };
