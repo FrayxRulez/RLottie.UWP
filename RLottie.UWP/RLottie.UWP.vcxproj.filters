@@ -38,12 +38,6 @@
     <Filter Include="src\vector\stb">
       <UniqueIdentifier>{7a6972de-be35-4c43-b4df-a6252d40b21f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\binding">
-      <UniqueIdentifier>{0079dac7-2bde-4056-9464-1949a850b5f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\binding\c">
-      <UniqueIdentifier>{0d992965-02a7-4a01-a613-419f024b2392}</UniqueIdentifier>
-    </Filter>
     <Filter Include="lz4">
       <UniqueIdentifier>{ab29540e-f373-4315-894d-bab24718b43b}</UniqueIdentifier>
     </Filter>
@@ -66,9 +60,6 @@
       <Filter>src\vector</Filter>
     </ClCompile>
     <ClCompile Include="..\rlottie\src\vector\vbrush.cpp">
-      <Filter>src\vector</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rlottie\src\vector\vcompositionfunctions.cpp">
       <Filter>src\vector</Filter>
     </ClCompile>
     <ClCompile Include="..\rlottie\src\vector\vdasher.cpp">
@@ -131,9 +122,6 @@
     <ClCompile Include="..\rlottie\src\lottie\lottieparser.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
-    <ClCompile Include="..\rlottie\src\lottie\lottieproxymodel.cpp">
-      <Filter>src\lottie</Filter>
-    </ClCompile>
     <ClCompile Include="..\rlottie\src\lottie\lottieanimation.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
@@ -146,9 +134,6 @@
     <ClCompile Include="..\rlottie\src\lottie\lottiekeypath.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
-    <ClCompile Include="..\rlottie\src\binding\c\lottieanimation_capi.cpp">
-      <Filter>src\binding\c</Filter>
-    </ClCompile>
     <ClCompile Include="..\lz4\lib\lz4.c">
       <Filter>lz4</Filter>
     </ClCompile>
@@ -156,6 +141,9 @@
       <Filter>src\vector</Filter>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="..\rlottie\src\vector\vdrawhelper_common.cpp">
+      <Filter>src\vector</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -361,16 +349,7 @@
     <ClInclude Include="..\rlottie\src\lottie\lottiekeypath.h">
       <Filter>src\lottie</Filter>
     </ClInclude>
-    <ClInclude Include="..\rlottie\src\lottie\lottieloader.h">
-      <Filter>src\lottie</Filter>
-    </ClInclude>
     <ClInclude Include="..\rlottie\src\lottie\lottiemodel.h">
-      <Filter>src\lottie</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rlottie\src\lottie\lottieparser.h">
-      <Filter>src\lottie</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rlottie\src\lottie\lottieproxymodel.h">
       <Filter>src\lottie</Filter>
     </ClInclude>
     <ClInclude Include="..\rlottie\src\lottie\lottieitem.h">
@@ -391,6 +370,9 @@
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="..\rlottie\src\vector\varenaalloc.h">
       <Filter>src\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rlottie\src\lottie\lottiefiltermodel.h">
+      <Filter>src\lottie</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

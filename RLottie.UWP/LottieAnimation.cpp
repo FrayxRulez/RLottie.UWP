@@ -24,12 +24,9 @@ namespace winrt::RLottie::implementation
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 
 		long hash = 0;
-		std::vector<std::pair<std::uint32_t, std::uint32_t>> colors;
 		if (colorReplacement != nullptr) {
 			for (auto&& elem : colorReplacement)
 			{
-				colors.push_back({ elem.Key(), elem.Value() });
-
 				hash = ((hash * 20261) + 0x80000000L + elem.Key()) % 0x80000000L;
 				hash = ((hash * 20261) + 0x80000000L + elem.Value()) % 0x80000000L;
 			}
@@ -45,7 +42,14 @@ namespace winrt::RLottie::implementation
 			}
 
 			info->path = filePath.data();
-			info->animation = rlottie::Animation::loadFromData(data, cache, "", true, colors);
+
+			if (colorReplacement == nullptr) {
+				info->animation = rlottie::Animation::loadFromData(data, cache, "", true);
+			}
+			else {
+				info->m_colorReplacement = colorReplacement;
+				info->animation = rlottie::Animation::loadFromData(data, "", [info](float& r, float& g, float& b) { info->FilterColor(r, g, b); });
+			}
 		}
 		catch (...) {
 
@@ -92,6 +96,28 @@ namespace winrt::RLottie::implementation
 		}
 
 		return info.as<RLottie::LottieAnimation>();
+	}
+
+	void LottieAnimation::FilterColor(float& r, float& g, float& b) {
+		const auto convert = [](float value) {
+			return std::uint32_t(
+				std::round(min(max(value, 0.f), 1.f) * 255.));
+		};
+		const auto part = [](std::uint32_t value, int shift) {
+			return float((value >> shift) & 0xFFU) / 255.f;
+		};
+		const auto converted =
+			convert(b) | (convert(g) << 8) | (convert(r) << 16);
+		for (const auto& pair : m_colorReplacement) {
+			const auto key = pair.Key();
+			const auto value = pair.Value();
+			if (key == converted) {
+				r = part(value, 16);
+				g = part(value, 8);
+				b = part(value, 0);
+				return;
+			}
+		}
 	}
 
 	void LottieAnimation::CreateCache(int32_t w, int32_t h)

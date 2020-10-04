@@ -1,6 +1,6 @@
 [submodule "rlottie"]
 	path = rlottie
-	url = https://github.com/FrayxRulez/rlottie.git
+	url = https://github.com/Samsung/rlottie.git
 [submodule "gzip-hpp"]
 	path = gzip-hpp
 	url = https://github.com/mapbox/gzip-hpp.git
