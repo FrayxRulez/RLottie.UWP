@@ -155,11 +155,14 @@ namespace winrt::RLottie::implementation
 		}
 	}
 
-	WriteableBitmap LottieAnimation::RenderSync(int32_t frame, int32_t w, int32_t h)
+	void LottieAnimation::RenderSync(WriteableBitmap bitmap, int32_t frame)
 	{
+		auto w = bitmap.PixelWidth();
+		auto h = bitmap.PixelHeight();
+
 		int stride = w * 4;
 		//void* pixels = malloc(w * h * 4);
-		auto bitmap{ WriteableBitmap(w, h) };
+		//auto bitmap{ WriteableBitmap(w, h) };
 		void* pixels = bitmap.PixelBuffer().data();
 		bool loadedFromCache = false;
 		if (this->precache && !this->createCache && w * 4 == stride && this->maxFrameSize <= w * h * 4 && this->imageSize == w * h * 4) {
@@ -192,12 +195,14 @@ namespace winrt::RLottie::implementation
 			this->animation->renderSync((size_t)frame, surface);
 			this->nextFrameIsCacheFrame = true;
 		}
-
-		return bitmap;
 	}
 
-	CanvasBitmap LottieAnimation::RenderSync(ICanvasResourceCreator resourceCreator, int32_t frame, int32_t w, int32_t h)
+	void LottieAnimation::RenderSync(CanvasBitmap bitmap, int32_t frame)
 	{
+		auto size = bitmap.SizeInPixels();
+		auto w = size.Width;
+		auto h = size.Height;
+
 		int stride = w * 4;
 		void* pixels = malloc(w * h * 4);
 		bool loadedFromCache = false;
@@ -234,16 +239,8 @@ namespace winrt::RLottie::implementation
 
 		winrt::array_view<const uint8_t> data((uint8_t*)pixels, (uint8_t*)pixels + w * h * 4);
 
-		if (bitmapFrame == nullptr) {
-			bitmapFrame = CanvasBitmap::CreateFromBytes(resourceCreator, data, w, h, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized);
-			free(pixels);
-		}
-		else {
-			bitmapFrame.SetPixelBytes(data);
-			free(pixels);
-		}
-
-		return bitmapFrame;
+		bitmap.SetPixelBytes(data);
+		free(pixels);
 	}
 
 #pragma region Properties

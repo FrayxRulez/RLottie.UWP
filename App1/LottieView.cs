@@ -27,7 +27,7 @@ namespace Unigram.Controls
         private Image _thumbnail;
 
         private string _source;
-        private CachedAnimation _animation;
+        private LottieAnimation _animation;
 
         private bool _animationIsCached;
         private bool _animationIsCaching;
@@ -138,6 +138,11 @@ namespace Unigram.Controls
         {
             _device = sender;
 
+            var colors = new byte[256 * 256 * 4];
+
+            _bitmap = CanvasBitmap.CreateFromBytes(sender, colors, 256, 256, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
+            _device = sender;
+
             if (args.Reason == CanvasCreateResourcesReason.FirstTime)
             {
                 OnSourceChanged(UriToPath(Source), _source);
@@ -164,7 +169,7 @@ namespace Unigram.Controls
         public void Invalidate()
         {
             var animation = _animation;
-            if (animation == null || _animationIsCaching || _canvas == null || _device == null)
+            if (animation == null || _animationIsCaching || _canvas == null || _bitmap == null)
             {
                 return;
             }
@@ -172,7 +177,7 @@ namespace Unigram.Controls
             var index = _index;
             var framesPerUpdate = _limitFps ? _animationFrameRate < 60 ? 1 : 2 : 1;
 
-            _bitmap = animation.RenderSync(_device, index, 256, 256);
+            animation.RenderSync(_bitmap, index, 256, 256);
 
             if (!_animationIsCached)
             {
@@ -181,7 +186,7 @@ namespace Unigram.Controls
 
                 ThreadPool.QueueUserWorkItem(state =>
                 {
-                    if (animation is CachedAnimation cached)
+                    if (animation is LottieAnimation cached)
                     {
                         cached.CreateCache(256, 256);
                         _animationIsCaching = false;
@@ -282,7 +287,7 @@ namespace Unigram.Controls
                 return;
             }
 
-            var animation = CachedAnimation.LoadFromFile(newValue, _isCachingEnabled, _limitFps, ColorReplacements);
+            var animation = LottieAnimation.LoadFromFile(newValue, _isCachingEnabled, ColorReplacements);
             if (animation == null)
             {
                 // The app can't access the file specified

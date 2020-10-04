@@ -7,8 +7,9 @@ namespace RLottie
 
         void CreateCache(Int32 width, Int32 height);
 
-        Windows.UI.Xaml.Media.ImageSource RenderSync(Int32 frame, Int32 width, Int32 height);
-        Microsoft.Graphics.Canvas.CanvasBitmap RenderSync(Microsoft.Graphics.Canvas.ICanvasResourceCreator resourceCreator, Int32 frame, Int32 width, Int32 height);
+        [default_overload]
+        void RenderSync(Microsoft.Graphics.Canvas.CanvasBitmap bitmap, Int32 frame);
+        void RenderSync(Windows.UI.Xaml.Media.Imaging.WriteableBitmap bitmap, Int32 frame);
 
         Double Duration { get; };
         Double FrameRate { get; };

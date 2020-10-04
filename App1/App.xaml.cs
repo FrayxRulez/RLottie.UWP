@@ -30,6 +30,8 @@ namespace App1
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+
+            DebugSettings.EnableFrameRateCounter = true;
         }
 
         /// <summary>

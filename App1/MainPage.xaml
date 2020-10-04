@@ -15,7 +15,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="controls:LottieView">
-                        <xaml:CanvasControl x:Name="Canvas"/>
+                        <Grid>
+                            <xaml:CanvasControl x:Name="Canvas"/>
+                        </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>

@@ -27,10 +27,6 @@ namespace winrt::RLottie::implementation
 				delete[] decompressBuffer;
 				decompressBuffer = nullptr;
 			}
-			if (bitmapFrame != nullptr) {
-				bitmapFrame.Close();
-				bitmapFrame = nullptr;
-			}
 		}
 
 		void Close() {
@@ -38,16 +34,12 @@ namespace winrt::RLottie::implementation
 				delete[] decompressBuffer;
 				decompressBuffer = nullptr;
 			}
-			if (bitmapFrame != nullptr) {
-				bitmapFrame.Close();
-				bitmapFrame = nullptr;
-			}
 		}
 
 		void CreateCache(int32_t width, int32_t height);
 
-		WriteableBitmap RenderSync(int32_t frame, int32_t width, int32_t height);
-		CanvasBitmap RenderSync(ICanvasResourceCreator resourceCreator, int32_t frame, int32_t width, int32_t height);
+		void RenderSync(WriteableBitmap bitmap, int32_t frame);
+		void RenderSync(CanvasBitmap bitmap, int32_t frame);
 
 		double Duration();
 
@@ -75,8 +67,6 @@ namespace winrt::RLottie::implementation
 		uint32_t imageSize = 0;
 		std::vector<uint32_t> fileOffsets;
 		bool nextFrameIsCacheFrame = false;
-
-		CanvasBitmap bitmapFrame{ nullptr };
 	};
 }
 
