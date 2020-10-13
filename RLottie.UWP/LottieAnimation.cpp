@@ -5,6 +5,8 @@
 #include "StringUtils.h"
 #include "rlottie.h"
 
+#include <winrt/Windows.Storage.h>
+
 #include <wrl/wrappers/corewrappers.h>
 
 #include <string>
@@ -42,6 +44,85 @@ namespace winrt::RLottie::implementation
 			}
 
 			info->path = filePath.data();
+
+			if (colorReplacement == nullptr) {
+				info->animation = rlottie::Animation::loadFromData(data, cache, "", true);
+			}
+			else {
+				info->m_colorReplacement = colorReplacement;
+				info->animation = rlottie::Animation::loadFromData(data, "", [info](float& r, float& g, float& b) { info->FilterColor(r, g, b); });
+			}
+		}
+		catch (...) {
+
+		}
+		//if (srcString != 0) {
+		//	env->ReleaseStringUTFChars(src, srcString);
+		//}
+		if (info->animation == nullptr) {
+			//delete info;
+			return nullptr;
+		}
+		info->frameCount = info->animation->totalFrame();
+		info->fps = (int)info->animation->frameRate();
+		if (info->fps > 60 || info->frameCount > 600 || info->frameCount <= 0) {
+			//delete info;
+			return nullptr;
+		}
+		info->precache = precache;
+		if (info->precache) {
+			info->cacheFile = info->path;
+
+			if (hash != 0) {
+				info->cacheFile += L".";
+				info->cacheFile += std::to_wstring(abs(hash));
+			}
+
+			info->cacheFile += L".cache";
+			FILE* precacheFile = _wfopen(info->cacheFile.c_str(), L"r+b");
+			if (precacheFile == nullptr) {
+				info->createCache = true;
+			}
+			else {
+				uint8_t temp;
+				size_t read = fread(&temp, sizeof(uint8_t), 1, precacheFile);
+				info->createCache = read != 1 || temp != CACHED_VERSION;
+				if (!info->createCache) {
+					info->fileOffsets = std::vector<uint32_t>(info->frameCount, 0);
+					fread(&info->maxFrameSize, sizeof(uint32_t), 1, precacheFile);
+					fread(&info->imageSize, sizeof(uint32_t), 1, precacheFile);
+					fread(&info->fileOffsets[0], sizeof(uint32_t), info->frameCount, precacheFile);
+				}
+				fclose(precacheFile);
+			}
+		}
+
+		return info.as<RLottie::LottieAnimation>();
+	}
+
+	RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
+	{
+		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
+
+		long hash = 0;
+		if (colorReplacement != nullptr) {
+			for (auto&& elem : colorReplacement)
+			{
+				hash = ((hash * 20261) + 0x80000000L + elem.Key()) % 0x80000000L;
+				hash = ((hash * 20261) + 0x80000000L + elem.Value()) % 0x80000000L;
+			}
+		}
+
+		try {
+			auto data = string_to_unmanaged(jsonData);
+			auto cache = string_to_unmanaged(cacheKey);
+
+			if (hash != 0) {
+				cache += ".";
+				cache += std::to_string(abs(hash));
+			}
+
+			info->path = winrt::Windows::Storage::ApplicationData::Current().LocalFolder().Path() + L"\\" + cacheKey;
 
 			if (colorReplacement == nullptr) {
 				info->animation = rlottie::Animation::loadFromData(data, cache, "", true);

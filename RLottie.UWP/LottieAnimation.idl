@@ -4,6 +4,7 @@ namespace RLottie
     runtimeclass LottieAnimation : Windows.Foundation.IClosable
     {
         static LottieAnimation LoadFromFile(String filePath, Boolean precache, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
+        static LottieAnimation LoadFromData(String jsonData, String cacheKey, Boolean precache, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
 
         void CreateCache(Int32 width, Int32 height);
 

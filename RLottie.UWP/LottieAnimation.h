@@ -19,6 +19,7 @@ namespace winrt::RLottie::implementation
 	{
 	public:
 		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
+		static RLottie::LottieAnimation LoadFromData(winrt::hstring jsonData, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
 
 		LottieAnimation() = default;
 
