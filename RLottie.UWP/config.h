@@ -4,7 +4,7 @@
 #define LOTTIE_IMAGE_MODULE_SUPPORT
 #endif
 
-#define LOTTIE_THREAD
+//#define LOTTIE_THREAD
 
 #ifdef LOTTIE_THREAD
 #define LOTTIE_THREAD_SUPPORT
