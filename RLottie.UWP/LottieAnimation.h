@@ -18,6 +18,8 @@ namespace winrt::RLottie::implementation
 	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
+		static CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h);
+
 		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
 		static RLottie::LottieAnimation LoadFromData(winrt::hstring jsonData, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
 
@@ -71,7 +73,9 @@ namespace winrt::RLottie::implementation
 		uint32_t maxFrameSize = 0;
 		uint32_t imageSize = 0;
 		std::vector<uint32_t> fileOffsets;
+		uint32_t fileOffset = 0;
 		bool nextFrameIsCacheFrame = false;
+		uint32_t framesAvailableInCache = 0;
 	};
 }
 

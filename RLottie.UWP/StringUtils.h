@@ -65,7 +65,7 @@ inline std::string string_to_unmanaged(winrt::hstring str) {
 inline std::string DecompressFromFile(winrt::hstring filePath) {
 	FILE* file = _wfopen(filePath.c_str(), L"rb");
 	if (file == NULL) {
-		return nullptr;
+		return "";
 	}
 
 	fseek(file, 0, SEEK_END);

@@ -21,6 +21,41 @@ using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
 namespace winrt::RLottie::implementation
 {
+	CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h)
+	{
+		auto nativeDeviceWrapper = resourceCreator.as<ABI::Microsoft::Graphics::Canvas::ICanvasResourceWrapperNative>();
+		auto nativeDevice = resourceCreator.as<ABI::Microsoft::Graphics::Canvas::ICanvasDevice>();
+		com_ptr<ID2D1Device1> pDevice{ nullptr };
+		check_hresult(nativeDeviceWrapper->GetNativeResource(nullptr, 0.0f, guid_of<ID2D1Device1>(), pDevice.put_void()));
+
+		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1();
+		bitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+		bitmapProperties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		bitmapProperties.dpiX = 96;
+		bitmapProperties.dpiY = 96;
+
+		auto blockSize = 1;
+		auto blocksWide = w / blockSize;
+		auto pitch = 4 * blocksWide;
+
+		auto blocksHigh = h / blockSize;
+		auto bytesNeeded = blocksHigh * pitch;
+
+		//Next we need to call some Direct2D functions to create the ID2D1ImageSourceFromWic object
+		com_ptr<ID2D1Bitmap1> pBitmap{ nullptr };
+		com_ptr<ID2D1DeviceContext1> pContext{ nullptr };
+		check_hresult(pDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, pContext.put()));
+		com_ptr<ID2D1DeviceContext2> pContext2 = pContext.as<ID2D1DeviceContext2>();
+		check_hresult(pContext2->CreateBitmap({ (uint32_t)w, (uint32_t)h }, nullptr, pitch, bitmapProperties, pBitmap.put()));
+
+		//Finally we need to wrap the ID2D1ImageSourceFromWic object inside 
+		auto factory = winrt::get_activation_factory<CanvasDevice, ABI::Microsoft::Graphics::Canvas::ICanvasFactoryNative>(); //abi::ICanvasFactoryNative is the activation factory for the CanvasDevice class
+		com_ptr<::IInspectable> pInspectable{ nullptr };
+		check_hresult(factory->GetOrCreate(nativeDevice.get(), pBitmap.as<::IUnknown>().get(), 0.0f, pInspectable.put())); //Note abi::ICanvasDevice is defined in the header Microsoft.Graphics.Canvas.h
+		
+		return pInspectable.as<CanvasBitmap>();
+	}
+
 	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
@@ -38,6 +73,10 @@ namespace winrt::RLottie::implementation
 			auto data = DecompressFromFile(filePath);
 			auto cache = string_to_unmanaged(filePath);
 
+			if (data.empty()) {
+				return nullptr;
+			}
+
 			if (hash != 0) {
 				cache += ".";
 				cache += std::to_string(abs(hash));
@@ -46,7 +85,7 @@ namespace winrt::RLottie::implementation
 			info->path = filePath.data();
 
 			if (colorReplacement == nullptr) {
-				info->animation = rlottie::Animation::loadFromData(data, cache, "", true);
+				info->animation = rlottie::Animation::loadFromData(data, cache);
 			}
 			else {
 				info->m_colorReplacement = colorReplacement;
@@ -242,7 +281,9 @@ namespace winrt::RLottie::implementation
 					this->fileOffsets[a] = offset;
 					fwrite(&size, sizeof(uint32_t), 1, precacheFile);
 					fwrite(compressBuffer, sizeof(uint8_t), size, precacheFile);
+					//fflush(precacheFile);
 					offset += sizeof(uint32_t) + size;
+					framesAvailableInCache++;
 				}
 				delete[] compressBuffer;
 				fseek(precacheFile, 0, SEEK_SET);
@@ -310,10 +351,19 @@ namespace winrt::RLottie::implementation
 		auto w = size.Width;
 		auto h = size.Height;
 
+		//int framesPerUpdate = /*!this->limitFps || this->fps < 60 ? 1 : 2*/ 1;
+		//int framesAvailableInCache = this->framesAvailableInCache;
+
+		//if (this->createCache && this->precache && frame > 0) {
+		//	if (frame / framesPerUpdate >= framesAvailableInCache) {
+		//		return /*-1*/;
+		//	}
+		//}
+
 		int stride = w * 4;
 		void* pixels = malloc(w * h * 4);
 		bool loadedFromCache = false;
-		if (this->precache && !this->createCache && w * 4 == stride && this->maxFrameSize <= w * h * 4 && this->imageSize == w * h * 4) {
+		if (this->precache && (!this->createCache || frame > 0) && w * 4 == stride && maxFrameSize <= w * h * 4 && this->imageSize == w * h * 4) {
 			FILE* precacheFile = _wfopen(this->cacheFile.c_str(), L"rb");
 			if (precacheFile != nullptr) {
 				fseek(precacheFile, this->fileOffsets[frame], SEEK_SET);
@@ -339,9 +389,11 @@ namespace winrt::RLottie::implementation
 		}
 
 		if (!loadedFromCache) {
-			rlottie::Surface surface((uint32_t*)pixels, (size_t)w, (size_t)h, (size_t)stride);
-			this->animation->renderSync((size_t)frame, surface);
-			this->nextFrameIsCacheFrame = true;
+			//if (!this->nextFrameIsCacheFrame || !this->precache) {
+				rlottie::Surface surface((uint32_t*)pixels, (size_t)w, (size_t)h, (size_t)stride);
+				this->animation->renderSync((size_t)frame, surface);
+				this->nextFrameIsCacheFrame = true;
+			//}
 		}
 
 		winrt::array_view<const uint8_t> data((uint8_t*)pixels, (uint8_t*)pixels + w * h * 4);

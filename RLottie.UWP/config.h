@@ -5,6 +5,7 @@
 #endif
 
 //#define LOTTIE_THREAD
+#define LOTTIE_THREAD_SAFE
 
 #ifdef LOTTIE_THREAD
 #define LOTTIE_THREAD_SUPPORT

@@ -3,6 +3,8 @@ namespace RLottie
     [default_interface]
     runtimeclass LottieAnimation : Windows.Foundation.IClosable
     {
+        //static Microsoft.Graphics.Canvas.CanvasBitmap CreateBitmap(Microsoft.Graphics.Canvas.ICanvasResourceCreator resourceCreator, Int32 width, Int32 height);
+
         static LottieAnimation LoadFromFile(String filePath, Boolean precache, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
         static LottieAnimation LoadFromData(String jsonData, String cacheKey, Boolean precache, Windows.Foundation.Collections.IMapView<UInt32, UInt32> colorReplacement);
 
