@@ -57,10 +57,6 @@ namespace winrt::RLottie::implementation
 	private:
 		//LottieAnimation();
 
-		void FilterColor(float& r, float& g, float& b);
-
-		winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> m_colorReplacement;
-
 		std::unique_ptr<rlottie::Animation> animation;
 		size_t frameCount = 0;
 		int32_t frameIndex = 0;

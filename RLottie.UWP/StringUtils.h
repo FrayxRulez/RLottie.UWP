@@ -85,5 +85,6 @@ inline std::string DecompressFromFile(winrt::hstring filePath) {
 		data = std::string(buffer, length);
 	}
 
+	free(buffer);
 	return data;
 }

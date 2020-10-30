@@ -62,6 +62,9 @@
     <ClCompile Include="..\rlottie\src\vector\vbrush.cpp">
       <Filter>src\vector</Filter>
     </ClCompile>
+    <ClCompile Include="..\rlottie\src\vector\vcompositionfunctions.cpp">
+      <Filter>src\vector</Filter>
+    </ClCompile>
     <ClCompile Include="..\rlottie\src\vector\vdasher.cpp">
       <Filter>src\vector</Filter>
     </ClCompile>
@@ -122,13 +125,13 @@
     <ClCompile Include="..\rlottie\src\lottie\lottieparser.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
+    <ClCompile Include="..\rlottie\src\lottie\lottieproxymodel.cpp">
+      <Filter>src\lottie</Filter>
+    </ClCompile>
     <ClCompile Include="..\rlottie\src\lottie\lottieanimation.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
     <ClCompile Include="..\rlottie\src\lottie\lottieitem.cpp">
-      <Filter>src\lottie</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rlottie\src\lottie\lottieitem_capi.cpp">
       <Filter>src\lottie</Filter>
     </ClCompile>
     <ClCompile Include="..\rlottie\src\lottie\lottiekeypath.cpp">
@@ -137,12 +140,9 @@
     <ClCompile Include="..\lz4\lib\lz4.c">
       <Filter>lz4</Filter>
     </ClCompile>
-    <ClCompile Include="..\rlottie\src\vector\varenaalloc.cpp">
-      <Filter>src\vector</Filter>
-    </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="..\rlottie\src\vector\vdrawhelper_common.cpp">
-      <Filter>src\vector</Filter>
+    <ClCompile Include="..\rlottie\src\vector\pixman\vregion.cpp">
+      <Filter>src\vector\pixman</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -349,7 +349,16 @@
     <ClInclude Include="..\rlottie\src\lottie\lottiekeypath.h">
       <Filter>src\lottie</Filter>
     </ClInclude>
+    <ClInclude Include="..\rlottie\src\lottie\lottieloader.h">
+      <Filter>src\lottie</Filter>
+    </ClInclude>
     <ClInclude Include="..\rlottie\src\lottie\lottiemodel.h">
+      <Filter>src\lottie</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rlottie\src\lottie\lottieparser.h">
+      <Filter>src\lottie</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rlottie\src\lottie\lottieproxymodel.h">
       <Filter>src\lottie</Filter>
     </ClInclude>
     <ClInclude Include="..\rlottie\src\lottie\lottieitem.h">
@@ -368,11 +377,8 @@
       <Filter>lz4</Filter>
     </ClInclude>
     <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="..\rlottie\src\vector\varenaalloc.h">
-      <Filter>src\vector</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rlottie\src\lottie\lottiefiltermodel.h">
-      <Filter>src\lottie</Filter>
+    <ClInclude Include="..\rlottie\src\vector\pixman\vregion.h">
+      <Filter>src\vector\pixman</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
