@@ -12,11 +12,12 @@
 
     <Page.Resources>
         <Style TargetType="controls:LottieView">
+            <Setter Property="IsTabStop" Value="False"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="controls:LottieView">
-                        <Grid>
-                            <xaml:CanvasControl x:Name="Canvas"/>
+                        <Grid x:Name="LayoutRoot">
+                            <xaml:CanvasControl x:Name="Canvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -27,7 +28,10 @@
     <Grid>
         <ScrollViewer>
             <StackPanel x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Width="256" Height="256" x:Name="Pic"/>
+                <!--<controls:LottieMultiView
+                    x:Name="Slot"
+                    AutoPlay="True"
+                    Value="0"/>-->
 
 
                 <!--<controls:LottieView Source="ms-appx:///1258816259753938.tgs" Width="200" Height="200"/>-->

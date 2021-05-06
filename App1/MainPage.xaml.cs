@@ -1,30 +1,14 @@
-﻿using RLottie;
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
+﻿using System;
 using Unigram.Controls;
 using Windows.ApplicationModel;
-using Windows.Graphics.Imaging;
 using Windows.Storage;
-using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media.Imaging;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace App1
 {
-    [ComImport]
-    [Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    unsafe interface IMemoryBufferByteAccess
-    {
-        void GetBuffer(out byte* buffer, out uint capacity);
-    }
-
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -54,6 +38,7 @@ namespace App1
 
             var player = new LottieView
             {
+                AutoPlay = true,
                 Width = 200,
                 Height = 200,
                 Source = new Uri($"ms-appdata://local/{_stickers[index]}.tgs")
@@ -66,7 +51,10 @@ namespace App1
 
         private void Button2_Click(object sender, RoutedEventArgs e)
         {
-            Panel.Children.RemoveAt(0);
+            if (Panel.Children.Count > 0)
+            {
+                Panel.Children.RemoveAt(0);
+            }
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
