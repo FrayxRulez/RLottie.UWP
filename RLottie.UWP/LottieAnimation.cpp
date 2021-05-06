@@ -21,40 +21,40 @@ using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
 namespace winrt::RLottie::implementation
 {
-	CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h)
-	{
-		auto nativeDeviceWrapper = resourceCreator.as<ABI::Microsoft::Graphics::Canvas::ICanvasResourceWrapperNative>();
-		auto nativeDevice = resourceCreator.as<ABI::Microsoft::Graphics::Canvas::ICanvasDevice>();
-		com_ptr<ID2D1Device1> pDevice{ nullptr };
-		check_hresult(nativeDeviceWrapper->GetNativeResource(nullptr, 0.0f, guid_of<ID2D1Device1>(), pDevice.put_void()));
+	//CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h)
+	//{
+	//	auto nativeDeviceWrapper = resourceCreator.as<ABI::Microsoft::Graphics::Canvas::ICanvasResourceWrapperNative>();
+	//	auto nativeDevice = resourceCreator.as<ABI::Microsoft::Graphics::Canvas::ICanvasDevice>();
+	//	com_ptr<ID2D1Device1> pDevice{ nullptr };
+	//	check_hresult(nativeDeviceWrapper->GetNativeResource(nullptr, 0.0f, guid_of<ID2D1Device1>(), pDevice.put_void()));
 
-		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1();
-		bitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-		bitmapProperties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		bitmapProperties.dpiX = 96;
-		bitmapProperties.dpiY = 96;
+	//	D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1();
+	//	bitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+	//	bitmapProperties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	//	bitmapProperties.dpiX = 96;
+	//	bitmapProperties.dpiY = 96;
 
-		auto blockSize = 1;
-		auto blocksWide = w / blockSize;
-		auto pitch = 4 * blocksWide;
+	//	auto blockSize = 1;
+	//	auto blocksWide = w / blockSize;
+	//	auto pitch = 4 * blocksWide;
 
-		auto blocksHigh = h / blockSize;
-		auto bytesNeeded = blocksHigh * pitch;
+	//	auto blocksHigh = h / blockSize;
+	//	auto bytesNeeded = blocksHigh * pitch;
 
-		//Next we need to call some Direct2D functions to create the ID2D1ImageSourceFromWic object
-		com_ptr<ID2D1Bitmap1> pBitmap{ nullptr };
-		com_ptr<ID2D1DeviceContext1> pContext{ nullptr };
-		check_hresult(pDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, pContext.put()));
-		com_ptr<ID2D1DeviceContext2> pContext2 = pContext.as<ID2D1DeviceContext2>();
-		check_hresult(pContext2->CreateBitmap({ (uint32_t)w, (uint32_t)h }, nullptr, pitch, bitmapProperties, pBitmap.put()));
+	//	//Next we need to call some Direct2D functions to create the ID2D1ImageSourceFromWic object
+	//	com_ptr<ID2D1Bitmap1> pBitmap{ nullptr };
+	//	com_ptr<ID2D1DeviceContext1> pContext{ nullptr };
+	//	check_hresult(pDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, pContext.put()));
+	//	com_ptr<ID2D1DeviceContext2> pContext2 = pContext.as<ID2D1DeviceContext2>();
+	//	check_hresult(pContext2->CreateBitmap({ (uint32_t)w, (uint32_t)h }, nullptr, pitch, bitmapProperties, pBitmap.put()));
 
-		//Finally we need to wrap the ID2D1ImageSourceFromWic object inside 
-		auto factory = winrt::get_activation_factory<CanvasDevice, ABI::Microsoft::Graphics::Canvas::ICanvasFactoryNative>(); //abi::ICanvasFactoryNative is the activation factory for the CanvasDevice class
-		com_ptr<::IInspectable> pInspectable{ nullptr };
-		check_hresult(factory->GetOrCreate(nativeDevice.get(), pBitmap.as<::IUnknown>().get(), 0.0f, pInspectable.put())); //Note abi::ICanvasDevice is defined in the header Microsoft.Graphics.Canvas.h
-		
-		return pInspectable.as<CanvasBitmap>();
-	}
+	//	//Finally we need to wrap the ID2D1ImageSourceFromWic object inside 
+	//	auto factory = winrt::get_activation_factory<CanvasDevice, ABI::Microsoft::Graphics::Canvas::ICanvasFactoryNative>(); //abi::ICanvasFactoryNative is the activation factory for the CanvasDevice class
+	//	com_ptr<::IInspectable> pInspectable{ nullptr };
+	//	check_hresult(factory->GetOrCreate(nativeDevice.get(), pBitmap.as<::IUnknown>().get(), 0.0f, pInspectable.put())); //Note abi::ICanvasDevice is defined in the header Microsoft.Graphics.Canvas.h
+	//	
+	//	return pInspectable.as<CanvasBitmap>();
+	//}
 
 	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
 	{
@@ -334,6 +334,11 @@ namespace winrt::RLottie::implementation
 		void* pixels = malloc(w * h * 4);
 		bool loadedFromCache = false;
 		if (this->precache && (!this->createCache || frame > 0) && w * 4 == stride && maxFrameSize <= w * h * 4 && this->imageSize == w * h * 4) {
+			//FILE* precacheFile = this->caccaFile; //_wfopen(this->cacheFile.c_str(), L"rb");
+			//if (precacheFile == nullptr) {
+			//	caccaFile = _wfopen(this->cacheFile.c_str(), L"rb");
+			//	precacheFile = caccaFile;
+			//}
 			FILE* precacheFile = _wfopen(this->cacheFile.c_str(), L"rb");
 			if (precacheFile != nullptr) {
 				fseek(precacheFile, this->fileOffsets[frame], SEEK_SET);
@@ -366,27 +371,21 @@ namespace winrt::RLottie::implementation
 			//}
 		}
 
-		winrt::array_view<const uint8_t> data((uint8_t*)pixels, (uint8_t*)pixels + w * h * 4);
-
-		bitmap.SetPixelBytes(data);
+		auto bitmapAbi = bitmap.as<ABI::Microsoft::Graphics::Canvas::ICanvasBitmap>();
+		bitmapAbi->SetPixelBytes(w * h * 4, (BYTE*)pixels);
 		free(pixels);
 	}
 
 #pragma region Properties
 
-	double LottieAnimation::Duration()
-	{
-		return animation->duration();
-	}
-
 	double LottieAnimation::FrameRate()
 	{
-		return animation->frameRate();
+		return this->fps;
 	}
 
 	int32_t LottieAnimation::TotalFrame()
 	{
-		return animation->totalFrame();
+		return this->frameCount;
 	}
 
 	winrt::Windows::Foundation::Size LottieAnimation::Size()

@@ -14,7 +14,6 @@ namespace RLottie
         void RenderSync(Microsoft.Graphics.Canvas.CanvasBitmap bitmap, Int32 frame);
         void RenderSync(Windows.UI.Xaml.Media.Imaging.WriteableBitmap bitmap, Int32 frame);
 
-        Double Duration { get; };
         Double FrameRate { get; };
         Int32 TotalFrame { get; };
         Windows.Foundation.Size Size { get; };

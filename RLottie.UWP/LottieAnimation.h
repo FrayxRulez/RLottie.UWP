@@ -7,7 +7,13 @@
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
 #define CACHED_VERSION 3
-#define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t)
+#define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t) /*+ sizeof(int32_t) + sizeof(size_t)*/
+// Header
+// uint8_t  -> version
+// uint32_t -> maxFrameSize
+// uint32_t -> imageSize
+// int32_t -> frameRate
+// size_t -> totalFrame
 
 using namespace winrt;
 using namespace winrt::Microsoft::Graphics::Canvas;
@@ -18,7 +24,7 @@ namespace winrt::RLottie::implementation
 	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
-		static CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h);
+		//static CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h);
 
 		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
 		static RLottie::LottieAnimation LoadFromData(winrt::hstring jsonData, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement);
@@ -43,8 +49,6 @@ namespace winrt::RLottie::implementation
 
 		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
-
-		double Duration();
 
 		double FrameRate();
 
