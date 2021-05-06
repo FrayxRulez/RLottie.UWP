@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>RLottie</id>
+        <version>1.0</version>
+        <authors>Fela Ameghino</authors>
+        <owners>Fela Ameghino</owners>
+        <description>rlotte</description>
+    </metadata>
+
+    <files>
+        <file src="RLottie.UWP\x64\Release\RLottie.UWP\RLottie.dll" target="runtimes\win10-x64\native" />
+        <file src="RLottie.UWP\x64\Release\RLottie.UWP\RLottie.pri" target="runtimes\win10-x64\native" />
+        <file src="RLottie.UWP\x64\Release\RLottie.UWP\zlib1.dll" target="runtimes\win10-x64\native" />
+
+        <file src="RLottie.UWP\Release\RLottie.UWP\RLottie.dll" target="runtimes\win10-x86\native" />
+        <file src="RLottie.UWP\Release\RLottie.UWP\RLottie.pri" target="runtimes\win10-x86\native" />
+        <file src="RLottie.UWP\Release\RLottie.UWP\zlib1.dll" target="runtimes\win10-x86\native" />
+
+        <file src="RLottie.UWP\ARM64\Release\RLottie.UWP\RLottie.dll" target="runtimes\win10-arm64\native" />
+        <file src="RLottie.UWP\ARM64\Release\RLottie.UWP\RLottie.pri" target="runtimes\win10-arm64\native" />
+        <file src="RLottie.UWP\ARM64\Release\RLottie.UWP\zlib1.dll" target="runtimes\win10-arm64\native" />
+
+        <file src="RLottie.UWP\Release\RLottie.UWP\RLottie.winmd" target="lib\uap10.0" />
+        <file src="RLottie.props" target="build\native" />
+    </files>
+</package>
