@@ -380,13 +380,14 @@
     <ClInclude Include="..\rlottie\src\vector\pixman\vregion.h">
       <Filter>src\vector\pixman</Filter>
     </ClInclude>
+    <ClInclude Include="WorkQueue.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S">
       <Filter>src\vector\pixman</Filter>
     </None>
-    <None Include="packages.config" />
     <None Include="RLottie.def" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="LottieAnimation.idl" />

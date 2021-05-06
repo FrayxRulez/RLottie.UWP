@@ -3,11 +3,12 @@
 #include "LottieAnimation.g.h"
 
 #include "rlottie.h"
+#include "WorkQueue.h"
 
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
-#define CACHED_VERSION 3
-#define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t) /*+ sizeof(int32_t) + sizeof(size_t)*/
+#define CACHED_VERSION 4
+#define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int32_t) + sizeof(size_t)
 // Header
 // uint8_t  -> version
 // uint32_t -> maxFrameSize
@@ -15,6 +16,7 @@
 // int32_t -> frameRate
 // size_t -> totalFrame
 
+using namespace concurrency;
 using namespace winrt;
 using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
@@ -32,20 +34,21 @@ namespace winrt::RLottie::implementation
 		LottieAnimation() = default;
 
 		virtual ~LottieAnimation() {
-			if (decompressBuffer != nullptr) {
-				delete[] decompressBuffer;
-				decompressBuffer = nullptr;
-			}
+			Close();
 		}
 
 		void Close() {
-			if (decompressBuffer != nullptr) {
-				delete[] decompressBuffer;
-				decompressBuffer = nullptr;
+			slim_lock_guard const guard(m_lock);
+
+			if (m_compressWorker.joinable()) {
+				m_compressWorker.join();
+			}
+
+			if (m_decompressBuffer != nullptr) {
+				delete[] m_decompressBuffer;
+				m_decompressBuffer = nullptr;
 			}
 		}
-
-		void CreateCache(int32_t width, int32_t height);
 
 		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
@@ -56,26 +59,33 @@ namespace winrt::RLottie::implementation
 
 		winrt::Windows::Foundation::Size Size();
 
-		bool ShouldCache();
-
 	private:
-		//LottieAnimation();
+		bool LoadLottieAnimation();
+		void RenderSync(std::shared_ptr<uint8_t[]> pixels, size_t w, size_t h, int32_t frame);
 
-		std::unique_ptr<rlottie::Animation> animation;
-		size_t frameCount = 0;
-		int32_t frameIndex = 0;
-		int32_t fps = 30;
-		bool precache = false;
-		bool createCache = false;
-		std::wstring path;
-		std::wstring cacheFile;
-		uint8_t* decompressBuffer = nullptr;
-		uint32_t maxFrameSize = 0;
-		uint32_t imageSize = 0;
-		std::vector<uint32_t> fileOffsets;
-		uint32_t fileOffset = 0;
-		bool nextFrameIsCacheFrame = false;
-		uint32_t framesAvailableInCache = 0;
+		void CompressThreadProc();
+
+		bool m_compressStarted;
+		std::thread m_compressWorker;
+		WorkQueue m_compressQueue;
+
+		winrt::slim_mutex m_lock;
+		static std::map<std::string, winrt::slim_mutex> s_locks;
+
+		std::unique_ptr<rlottie::Animation> m_animation;
+		size_t m_frameCount = 0;
+		int32_t m_frameIndex = 0;
+		int32_t m_fps = 30;
+		bool m_precache = false;
+		winrt::hstring m_path;
+		std::wstring m_cacheFile;
+		std::string m_data;
+		std::string m_cacheKey;
+		uint8_t* m_decompressBuffer = nullptr;
+		uint32_t m_maxFrameSize = 0;
+		uint32_t m_imageSize = 0;
+		std::vector<uint32_t> m_fileOffsets;
+		std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
 	};
 }
 
