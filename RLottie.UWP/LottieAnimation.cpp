@@ -226,7 +226,7 @@ namespace winrt::RLottie::implementation
 		auto h = bitmap.PixelHeight();
 
 		uint8_t* pixels = bitmap.PixelBuffer().data();
-		auto unique = std::shared_ptr<uint8_t[]>(pixels);
+		auto unique = std::shared_ptr<uint8_t[]>(pixels, [](uint8_t* p) {});
 		RenderSync(unique, w, h, frame);
 	}
 
