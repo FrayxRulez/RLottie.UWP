@@ -245,12 +245,12 @@ namespace winrt::RLottie::implementation
 
 	void LottieAnimation::RenderSync(std::shared_ptr<uint8_t[]> pixels, size_t w, size_t h, int32_t frame)
 	{
-		slim_lock_guard const guard(s_locks[m_cacheKey]);
-
 		bool loadedFromCache = false;
 		if (m_precache && m_maxFrameSize <= w * h * 4 && m_imageSize == w * h * 4) {
 			uint32_t offset = m_fileOffsets[frame];
 			if (offset > 0) {
+				slim_lock_guard const guard(s_locks[m_cacheKey]);
+
 				FILE* precacheFile = _wfopen(m_cacheFile.c_str(), L"rb");
 				if (precacheFile != nullptr) {
 					fseek(precacheFile, offset, SEEK_SET);
@@ -309,6 +309,8 @@ namespace winrt::RLottie::implementation
 
 			auto w = work->w;
 			auto h = work->h;
+
+			slim_lock_guard const guard(s_locks[m_cacheKey]);
 
 			FILE* precacheFile = _wfopen(m_cacheFile.c_str(), L"r+b");
 			if (precacheFile != nullptr) {
