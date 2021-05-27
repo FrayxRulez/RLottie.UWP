@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "LottieAnimation.h"
-//#include "LottieAnimation.g.cpp"
+#if __has_include("LottieAnimation.g.cpp")
+#include "LottieAnimation.g.cpp"
+#endif
 
 #include "StringUtils.h"
 #include "rlottie.h"
