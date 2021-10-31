@@ -7,6 +7,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Unigram.Common;
 using Windows.ApplicationModel;
@@ -73,9 +74,10 @@ namespace Unigram.Controls
 
         private readonly LoopThread _thread;
         private readonly LoopThread _threadUI;
+        private readonly object _subscribeLock = new object();
         private bool _subscribed;
+        private bool _unsubscribe;
 
-        private bool _loaded;
         private bool _unloaded;
 
         public LottieView()
@@ -136,13 +138,11 @@ namespace Unigram.Controls
 
         private void OnLoading(FrameworkElement sender, object args)
         {
-            _loaded = true;
             Load();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            _loaded = true;
             Load();
         }
 
@@ -177,7 +177,11 @@ namespace Unigram.Controls
             }
             catch
             {
-                _ = Dispatcher.RunIdleAsync(idle => Subscribe(false));
+                lock (_subscribeLock)
+                {
+                    _unsubscribe = true;
+                    _thread.Tick -= OnTick;
+                }
             }
         }
 
@@ -220,6 +224,18 @@ namespace Unigram.Controls
                 FirstFrameRendered?.Invoke(this, EventArgs.Empty);
                 ElementCompositionPreview.SetElementChildVisual(this, null);
             }
+
+            Monitor.Enter(_subscribeLock);
+            if (_unsubscribe)
+            {
+                _unsubscribe = false;
+                Monitor.Exit(_subscribeLock);
+                Subscribe(false);
+            }
+            else
+            {
+                Monitor.Exit(_subscribeLock);
+            }
         }
 
         public void Invalidate()
@@ -261,9 +277,11 @@ namespace Unigram.Controls
 
                     if (!_isLoopingEnabled)
                     {
-                        //sender.Paused = true;
-                        //sender.ResetElapsedTime();
-                        _ = Dispatcher.RunIdleAsync(idle => Subscribe(false));
+                        lock (_subscribeLock)
+                        {
+                            _unsubscribe = true;
+                            _thread.Tick -= OnTick;
+                        }
                     }
                 }
             }
@@ -281,9 +299,11 @@ namespace Unigram.Controls
 
                     if (!_isLoopingEnabled)
                     {
-                        //sender.Paused = true;
-                        //sender.ResetElapsedTime();
-                        _ = Dispatcher.RunIdleAsync(idle => Subscribe(false));
+                        lock (_subscribeLock)
+                        {
+                            _unsubscribe = true;
+                            _thread.Tick -= OnTick;
+                        }
                     }
 
                     PositionChanged?.Invoke(this, 1);
@@ -293,10 +313,10 @@ namespace Unigram.Controls
 
         public void Seek(double position)
         {
-            if (position < 0 || position > 1)
-            {
-                return;
-            }
+            //if (position is < 0 or > 1)
+            //{
+            //    return;
+            //}
 
             var animation = _animation;
             if (animation == null)
@@ -340,7 +360,7 @@ namespace Unigram.Controls
 
             var shouldPlay = _shouldPlay;
 
-            var animation = await Task.Run(() => LottieAnimation.LoadFromFile(newValue, _isCachingEnabled, ColorReplacements));
+            var animation = await Task.Run(() => LottieAnimation.LoadFromFile(newValue, _frameSize, _isCachingEnabled, ColorReplacements));
             if (animation == null || !string.Equals(newValue, _source, StringComparison.OrdinalIgnoreCase))
             {
                 // The app can't access the file specified
@@ -431,15 +451,22 @@ namespace Unigram.Controls
 
         private void Subscribe(bool subscribe)
         {
-            _subscribed = subscribe;
-
-            _thread.Tick -= OnTick;
-            _threadUI.Invalidate -= OnInvalidate;
-
-            if (subscribe)
+            lock (_subscribeLock)
             {
-                _thread.Tick += OnTick;
-                _threadUI.Invalidate += OnInvalidate;
+                if (subscribe)
+                {
+                    _unsubscribe = false;
+                }
+
+                _subscribed = subscribe;
+                _thread.Tick -= OnTick;
+                _threadUI.Invalidate -= OnInvalidate;
+
+                if (subscribe)
+                {
+                    _thread.Tick += OnTick;
+                    _threadUI.Invalidate += OnInvalidate;
+                }
             }
         }
 
@@ -474,8 +501,8 @@ namespace Unigram.Controls
 
         public bool IsLoopingEnabled
         {
-            get { return (bool)GetValue(IsLoopingEnabledProperty); }
-            set { SetValue(IsLoopingEnabledProperty, value); }
+            get => (bool)GetValue(IsLoopingEnabledProperty);
+            set => SetValue(IsLoopingEnabledProperty, value);
         }
 
         public static readonly DependencyProperty IsLoopingEnabledProperty =
@@ -492,8 +519,8 @@ namespace Unigram.Controls
 
         public bool IsCachingEnabled
         {
-            get { return (bool)GetValue(IsCachingEnabledProperty); }
-            set { SetValue(IsCachingEnabledProperty, value); }
+            get => (bool)GetValue(IsCachingEnabledProperty);
+            set => SetValue(IsCachingEnabledProperty, value);
         }
 
         public static readonly DependencyProperty IsCachingEnabledProperty =
@@ -510,8 +537,8 @@ namespace Unigram.Controls
 
         public bool IsBackward
         {
-            get { return (bool)GetValue(IsBackwardProperty); }
-            set { SetValue(IsBackwardProperty, value); }
+            get => (bool)GetValue(IsBackwardProperty);
+            set => SetValue(IsBackwardProperty, value);
         }
 
         public static readonly DependencyProperty IsBackwardProperty =
@@ -528,8 +555,8 @@ namespace Unigram.Controls
 
         public SizeInt32 FrameSize
         {
-            get { return (SizeInt32)GetValue(FrameSizeProperty); }
-            set { SetValue(FrameSizeProperty, value); }
+            get => (SizeInt32)GetValue(FrameSizeProperty);
+            set => SetValue(FrameSizeProperty, value);
         }
 
         public static readonly DependencyProperty FrameSizeProperty =
@@ -546,8 +573,8 @@ namespace Unigram.Controls
 
         public bool AutoPlay
         {
-            get { return (bool)GetValue(AutoPlayProperty); }
-            set { SetValue(AutoPlayProperty, value); }
+            get => (bool)GetValue(AutoPlayProperty);
+            set => SetValue(AutoPlayProperty, value);
         }
 
         public static readonly DependencyProperty AutoPlayProperty =
@@ -559,8 +586,8 @@ namespace Unigram.Controls
 
         public Uri Source
         {
-            get { return (Uri)GetValue(SourceProperty); }
-            set { SetValue(SourceProperty, value); }
+            get => (Uri)GetValue(SourceProperty);
+            set => SetValue(SourceProperty, value);
         }
 
         public static readonly DependencyProperty SourceProperty =

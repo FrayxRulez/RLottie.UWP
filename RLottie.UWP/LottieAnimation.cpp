@@ -25,7 +25,7 @@ namespace winrt::RLottie::implementation
 {
 	std::map<std::string, winrt::slim_mutex> LottieAnimation::s_locks;
 
-	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
+	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 		info->m_path = filePath;
@@ -52,6 +52,18 @@ namespace winrt::RLottie::implementation
 
 				info->m_cacheKey += ".";
 				info->m_cacheKey += std::to_string(abs(hash));
+			}
+
+			if (size.Width != 256 || size.Height != 256) {
+				info->m_cacheFile += L".";
+				info->m_cacheFile += std::to_wstring(size.Width);
+				info->m_cacheFile += L"x";
+				info->m_cacheFile += std::to_wstring(size.Width);
+
+				info->m_cacheKey += ".";
+				info->m_cacheKey += std::to_string(size.Width);
+				info->m_cacheKey += "x";
+				info->m_cacheKey += std::to_string(size.Width);
 			}
 
 			bool createCache = true;
@@ -109,7 +121,7 @@ namespace winrt::RLottie::implementation
 		return info.as<RLottie::LottieAnimation>();
 	}
 
-	RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<uint32_t, uint32_t> colorReplacement)
+	RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, SizeInt32 size, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 		info->m_data = string_to_unmanaged(jsonData);
@@ -132,6 +144,13 @@ namespace winrt::RLottie::implementation
 			if (hash != 0) {
 				info->m_cacheKey += ".";
 				info->m_cacheKey += std::to_string(abs(hash));
+			}
+
+			if (size.Width != 256 || size.Height != 256) {
+				info->m_cacheKey += ".";
+				info->m_cacheKey += std::to_string(size.Width);
+				info->m_cacheKey += "x";
+				info->m_cacheKey += std::to_string(size.Width);
 			}
 
 			bool createCache = true;
