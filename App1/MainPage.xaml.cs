@@ -1,4 +1,7 @@
-﻿using System;
+﻿using RLottie;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 using Unigram.Controls;
 using Windows.ApplicationModel;
 using Windows.Storage;
@@ -33,8 +36,12 @@ namespace App1
             {
                 var file = await Package.Current.InstalledLocation.GetFileAsync($"{_stickers[index]}.tgs");
                 var result = await file.CopyAsync(ApplicationData.Current.LocalFolder, file.Name, NameCollisionOption.ReplaceExisting);
+
+                await Task.Run(() => LottieAnimation.LoadFromFile(result.Path, false, null).RenderSync(Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.png"), 512, 512, 0));
             }
             catch { }
+
+            return;
 
             var player = new LottieView
             {

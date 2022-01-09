@@ -16,6 +16,8 @@
 
 #include <lz4.h>
 
+#include <wincodec.h>
+
 using namespace winrt;
 using namespace winrt::RLottie;
 using namespace winrt::Microsoft::Graphics::Canvas;
@@ -25,10 +27,12 @@ namespace winrt::RLottie::implementation
 {
 	std::map<std::string, winrt::slim_mutex> LottieAnimation::s_locks;
 
-	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement)
+	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 		info->m_path = filePath;
+		info->m_size = size;
+		info->m_modifier = (rlottie::FitzModifier)modifier;
 
 		long hash = 0;
 		if (colorReplacement != nullptr) {
@@ -52,6 +56,14 @@ namespace winrt::RLottie::implementation
 
 				info->m_cacheKey += ".";
 				info->m_cacheKey += std::to_string(abs(hash));
+			}
+
+			if (modifier != FitzModifier::None) {
+				info->m_cacheFile += L".";
+				info->m_cacheFile += std::to_wstring((int)modifier);
+
+				info->m_cacheKey += ".";
+				info->m_cacheKey += std::to_string((int)modifier);
 			}
 
 			if (size.Width != 256 || size.Height != 256) {
@@ -121,10 +133,12 @@ namespace winrt::RLottie::implementation
 		return info.as<RLottie::LottieAnimation>();
 	}
 
-	RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, SizeInt32 size, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement)
+	RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, SizeInt32 size, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
 		info->m_data = string_to_unmanaged(jsonData);
+		info->m_size = size;
+		info->m_modifier = (rlottie::FitzModifier)modifier;
 
 		long hash = 0;
 		if (colorReplacement != nullptr) {
@@ -144,6 +158,11 @@ namespace winrt::RLottie::implementation
 			if (hash != 0) {
 				info->m_cacheKey += ".";
 				info->m_cacheKey += std::to_string(abs(hash));
+			}
+
+			if (modifier != FitzModifier::None) {
+				info->m_cacheKey += ".";
+				info->m_cacheKey += std::to_string((int)modifier);
 			}
 
 			if (size.Width != 256 || size.Height != 256) {
@@ -222,7 +241,7 @@ namespace winrt::RLottie::implementation
 				return false;
 			}
 
-			m_animation = rlottie::Animation::loadFromData(data, std::string(), std::string(), false, m_colors);
+			m_animation = rlottie::Animation::loadFromData(data, std::string(), std::string(), false, m_colors, m_modifier);
 
 			if (m_animation != nullptr) {
 				m_frameCount = m_animation->totalFrame();
@@ -239,6 +258,96 @@ namespace winrt::RLottie::implementation
 		}
 
 		return m_animation != nullptr;
+	}
+
+	void LottieAnimation::RenderSync(hstring filePath, int32_t frame)
+	{
+		int32_t w = m_size.Width;
+		int32_t h = m_size.Height;
+
+		uint8_t* pixels = new uint8_t[w * h * 4];
+		auto unique = std::shared_ptr<uint8_t[]>(pixels, [](uint8_t* p) {});
+		RenderSync(unique, w, h, frame);
+
+		IWICImagingFactory2* piFactory = NULL;
+		IWICBitmapEncoder* piEncoder = NULL;
+		IWICBitmapFrameEncode* piBitmapFrame = NULL;
+		IWICStream* piStream = NULL;
+
+		HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&piFactory));
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piFactory->CreateStream(&piStream);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piStream->InitializeFromFilename(filePath.data(), GENERIC_WRITE);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piFactory->CreateEncoder(GUID_ContainerFormatPng, NULL, &piEncoder);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piEncoder->Initialize(piStream, WICBitmapEncoderNoCache);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piEncoder->CreateNewFrame(&piBitmapFrame, nullptr);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piBitmapFrame->Initialize(nullptr);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piBitmapFrame->SetSize(w, h);
+		}
+
+		WICPixelFormatGUID formatGUID = GUID_WICPixelFormat32bppBGRA;
+		if (SUCCEEDED(hr))
+		{
+			hr = piBitmapFrame->SetPixelFormat(&formatGUID);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			UINT cbStride = (w * 32 + 7) / 8/***WICGetStride***/;
+			UINT cbBufferSize = w * h * 4;
+
+			hr = piBitmapFrame->WritePixels(h, cbStride, cbBufferSize, pixels);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piBitmapFrame->Commit();
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = piEncoder->Commit();
+		}
+
+		if (piFactory)
+			piFactory->Release();
+
+		if (piEncoder)
+			piEncoder->Release();
+
+		if (piBitmapFrame)
+			piBitmapFrame->Release();
+
+		if (piStream)
+			piStream->Release();
+
+		delete[] pixels;
 	}
 
 	void LottieAnimation::RenderSync(WriteableBitmap bitmap, int32_t frame)

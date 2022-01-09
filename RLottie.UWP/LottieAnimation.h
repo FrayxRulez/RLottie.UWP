@@ -29,8 +29,8 @@ namespace winrt::RLottie::implementation
 	public:
 		//static CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h);
 
-		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement);
-		static RLottie::LottieAnimation LoadFromData(winrt::hstring jsonData, SizeInt32 size, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement);
+		static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier = FitzModifier::None);
+		static RLottie::LottieAnimation LoadFromData(winrt::hstring jsonData, SizeInt32 size, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier = FitzModifier::None);
 
 		LottieAnimation() = default;
 
@@ -53,6 +53,7 @@ namespace winrt::RLottie::implementation
 
 		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
+		void RenderSync(hstring filePath, int32_t frame);
 
 		double FrameRate();
 
@@ -87,6 +88,8 @@ namespace winrt::RLottie::implementation
 		uint32_t m_imageSize = 0;
 		std::vector<uint32_t> m_fileOffsets;
 		std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
+		SizeInt32 m_size;
+		rlottie::FitzModifier m_modifier;
 	};
 }
 

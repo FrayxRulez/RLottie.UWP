@@ -1,14 +1,28 @@
 namespace RLottie
 {
+    enum FitzModifier
+    {
+        None,
+        Type12,
+        Type3,
+        Type4,
+        Type5,
+        Type6
+    };
+
     [default_interface]
     runtimeclass LottieAnimation : Windows.Foundation.IClosable
     {
         static LottieAnimation LoadFromFile(String filePath, Windows.Graphics.SizeInt32 size, Boolean precache, Windows.Foundation.Collections.IMapView<Int32, Int32> colorReplacement);
+        static LottieAnimation LoadFromFile(String filePath, Windows.Graphics.SizeInt32 size, Boolean precache, Windows.Foundation.Collections.IMapView<Int32, Int32> colorReplacement, FitzModifier modifier);
+
         static LottieAnimation LoadFromData(String jsonData, Windows.Graphics.SizeInt32 size, String cacheKey, Boolean precache, Windows.Foundation.Collections.IMapView<Int32, Int32> colorReplacement);
+        static LottieAnimation LoadFromData(String jsonData, Windows.Graphics.SizeInt32 size, String cacheKey, Boolean precache, Windows.Foundation.Collections.IMapView<Int32, Int32> colorReplacement, FitzModifier modifier);
 
         [default_overload]
         void RenderSync(Microsoft.Graphics.Canvas.CanvasBitmap bitmap, Int32 frame);
         void RenderSync(Windows.UI.Xaml.Media.Imaging.WriteableBitmap bitmap, Int32 frame);
+        void RenderSync(String filePath, Int32 frame);
 
         Double FrameRate { get; };
         Int32 TotalFrame { get; };
