@@ -3,7 +3,7 @@
 #include "LottieAnimation.g.h"
 
 #include "rlottie.h"
-#include "WorkQueue.h"
+#include <queue>
 
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
@@ -24,6 +24,8 @@ using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 
 namespace winrt::RLottie::implementation
 {
+	class WorkQueue;
+
 	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
@@ -39,12 +41,6 @@ namespace winrt::RLottie::implementation
 		}
 
 		void Close() {
-			slim_lock_guard const guard(m_lock);
-
-			if (m_compressWorker.joinable()) {
-				m_compressWorker.join();
-			}
-
 			if (m_decompressBuffer != nullptr) {
 				delete[] m_decompressBuffer;
 				m_decompressBuffer = nullptr;
@@ -61,17 +57,20 @@ namespace winrt::RLottie::implementation
 
 		winrt::Windows::Foundation::Size Size();
 
+		bool IsCaching();
+
 	private:
 		bool LoadLottieAnimation();
-		void RenderSync(std::shared_ptr<uint8_t[]> pixels, size_t w, size_t h, int32_t frame);
+		void RenderSync(uint8_t* pixels, size_t w, size_t h, int32_t frame, bool* rendered);
 
-		void CompressThreadProc();
+		static void CompressThreadProc();
 
-		bool m_compressStarted;
-		std::thread m_compressWorker;
-		WorkQueue m_compressQueue;
+		static bool s_compressStarted;
+		static std::thread s_compressWorker;
+		static WorkQueue s_compressQueue;
 
-		winrt::slim_mutex m_lock;
+		bool m_caching;
+
 		static std::map<std::string, winrt::slim_mutex> s_locks;
 
 		std::unique_ptr<rlottie::Animation> m_animation;
@@ -90,6 +89,60 @@ namespace winrt::RLottie::implementation
 		std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
 		SizeInt32 m_size;
 		rlottie::FitzModifier m_modifier;
+	};
+
+	class WorkItem {
+	public:
+		winrt::weak_ref<LottieAnimation> animation;
+		size_t w;
+		size_t h;
+
+		WorkItem(winrt::weak_ref<LottieAnimation> animation, size_t w, size_t h)
+			: animation(animation),
+			w(w),
+			h(h)
+		{
+
+		}
+	};
+
+	class WorkQueue
+	{
+		std::condition_variable work_available;
+		std::mutex work_mutex;
+		std::queue<WorkItem> work;
+
+	public:
+		void push_work(WorkItem item)
+		{
+			std::unique_lock<std::mutex> lock(work_mutex);
+
+			bool was_empty = work.empty();
+			work.push(item);
+
+			lock.unlock();
+
+			if (was_empty)
+			{
+				work_available.notify_one();
+			}
+		}
+
+		std::optional<WorkItem> wait_and_pop()
+		{
+			std::unique_lock<std::mutex> lock(work_mutex);
+			while (work.empty())
+			{
+				const std::chrono::milliseconds timeout(3000);
+				if (work_available.wait_for(lock, timeout) == std::cv_status::timeout) {
+					return std::nullopt;
+				}
+			}
+
+			WorkItem tmp = std::move(work.front());
+			work.pop();
+			return std::make_optional<WorkItem>(tmp);
+		}
 	};
 }
 

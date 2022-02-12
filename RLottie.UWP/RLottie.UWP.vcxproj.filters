@@ -380,7 +380,6 @@
     <ClInclude Include="..\rlottie\src\vector\pixman\vregion.h">
       <Filter>src\vector\pixman</Filter>
     </ClInclude>
-    <ClInclude Include="WorkQueue.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S">

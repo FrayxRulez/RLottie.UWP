@@ -37,11 +37,17 @@ namespace App1
                 var file = await Package.Current.InstalledLocation.GetFileAsync($"{_stickers[index]}.tgs");
                 var result = await file.CopyAsync(ApplicationData.Current.LocalFolder, file.Name, NameCollisionOption.ReplaceExisting);
 
-                await Task.Run(() => LottieAnimation.LoadFromFile(result.Path, false, null).RenderSync(Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.png"), 512, 512, 0));
+                var cache = await ApplicationData.Current.LocalFolder.TryGetItemAsync($"{file.Name}.cache");
+                if (cache != null)
+                {
+                    await file.DeleteAsync();
+                }
+
+                //await Task.Run(() => LottieAnimation.LoadFromFile(result.Path, false, null).RenderSync(Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.png"), 512, 512, 0));
             }
             catch { }
 
-            return;
+            //return;
 
             var player = new LottieView
             {

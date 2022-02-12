@@ -12,12 +12,17 @@
 
     <Page.Resources>
         <Style TargetType="controls:LottieView">
-            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="IsTabStop"
+                    Value="False" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="controls:LottieView">
                         <Grid x:Name="LayoutRoot">
-                            <xaml:CanvasControl x:Name="Canvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            <Image x:Name="Canvas"
+                                   Stretch="Fill"
+                                   AutomationProperties.AccessibilityView="Raw"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Stretch" />
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>

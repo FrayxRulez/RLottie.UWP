@@ -27,6 +27,10 @@ namespace winrt::RLottie::implementation
 {
 	std::map<std::string, winrt::slim_mutex> LottieAnimation::s_locks;
 
+	bool LottieAnimation::s_compressStarted;
+	std::thread LottieAnimation::s_compressWorker;
+	WorkQueue LottieAnimation::s_compressQueue;
+
 	RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
 	{
 		auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
@@ -266,8 +270,7 @@ namespace winrt::RLottie::implementation
 		int32_t h = m_size.Height;
 
 		uint8_t* pixels = new uint8_t[w * h * 4];
-		auto unique = std::shared_ptr<uint8_t[]>(pixels, [](uint8_t* p) {});
-		RenderSync(unique, w, h, frame);
+		RenderSync(pixels, w, h, frame, NULL);
 
 		IWICImagingFactory2* piFactory = NULL;
 		IWICBitmapEncoder* piEncoder = NULL;
@@ -356,8 +359,7 @@ namespace winrt::RLottie::implementation
 		auto h = bitmap.PixelHeight();
 
 		uint8_t* pixels = bitmap.PixelBuffer().data();
-		auto unique = std::shared_ptr<uint8_t[]>(pixels, [](uint8_t* p) {});
-		RenderSync(unique, w, h, frame);
+		RenderSync(pixels, w, h, frame, NULL);
 	}
 
 	void LottieAnimation::RenderSync(CanvasBitmap bitmap, int32_t frame)
@@ -367,15 +369,23 @@ namespace winrt::RLottie::implementation
 		auto h = size.Height;
 
 		uint8_t* pixels = new uint8_t[w * h * 4];
-		auto unique = std::shared_ptr<uint8_t[]>(pixels, [](uint8_t* p) { delete[] p; });
-		RenderSync(unique, w, h, frame);
+		bool rendered;
+		RenderSync(pixels, w, h, frame, &rendered);
 
-		bitmap.SetPixelBytes(winrt::array_view(pixels, w * h * 4));
+		if (rendered) {
+			bitmap.SetPixelBytes(winrt::array_view(pixels, w * h * 4));
+		}
+
+		delete[] pixels;
 	}
 
-	void LottieAnimation::RenderSync(std::shared_ptr<uint8_t[]> pixels, size_t w, size_t h, int32_t frame)
+	void LottieAnimation::RenderSync(uint8_t* pixels, size_t w, size_t h, int32_t frame, bool* rendered)
 	{
 		bool loadedFromCache = false;
+		if (rendered) {
+			*rendered = false;
+		}
+
 		if (m_precache && m_maxFrameSize <= w * h * 4 && m_imageSize == w * h * 4) {
 			uint32_t offset = m_fileOffsets[frame];
 			if (offset > 0) {
@@ -391,8 +401,12 @@ namespace winrt::RLottie::implementation
 					fread(&frameSize, sizeof(uint32_t), 1, precacheFile);
 					if (frameSize <= m_maxFrameSize) {
 						fread(m_decompressBuffer, sizeof(uint8_t), frameSize, precacheFile);
-						LZ4_decompress_safe((const char*)m_decompressBuffer, (char*)pixels.get(), frameSize, w * h * 4);
+						LZ4_decompress_safe((const char*)m_decompressBuffer, (char*)pixels, frameSize, w * h * 4);
 						loadedFromCache = true;
+
+						if (rendered) {
+							*rendered = true;
+						}
 					}
 					fclose(precacheFile);
 					int framesPerUpdate = /*limitFps ? fps < 60 ? 1 : 2 :*/ 1;
@@ -406,76 +420,113 @@ namespace winrt::RLottie::implementation
 			}
 		}
 
-		if (!loadedFromCache) {
+		if (!loadedFromCache && !m_caching) {
 			if (m_animation == nullptr && !LoadLottieAnimation()) {
 				return;
 			}
 
-			rlottie::Surface surface((uint32_t*)pixels.get(), w, h, w * 4);
+			rlottie::Surface surface((uint32_t*)pixels, w, h, w * 4);
 			m_animation->renderSync(frame, surface);
 
-			if (m_precache) {
-				m_compressQueue.push_work(WorkItem(frame, w, h, pixels));
+			if (rendered) {
+				*rendered = true;
+			}
 
-				if (!m_compressStarted) {
-					if (m_compressWorker.joinable()) {
-						m_compressWorker.join();
+			if (m_precache) {
+				m_caching = true;
+				s_compressQueue.push_work(WorkItem(get_weak(), w, h));
+
+				if (!s_compressStarted) {
+					if (s_compressWorker.joinable()) {
+						s_compressWorker.join();
 					}
 
-					m_compressStarted = true;
-					m_compressWorker = std::thread(&LottieAnimation::CompressThreadProc, this);
+					s_compressStarted = true;
+					s_compressWorker = std::thread(&LottieAnimation::CompressThreadProc);
 				}
 			}
 		}
 	}
 
 	void LottieAnimation::CompressThreadProc() {
-		while (m_compressStarted) {
-			auto work = m_compressQueue.wait_and_pop();
+		while (s_compressStarted) {
+			auto work = s_compressQueue.wait_and_pop();
 			if (work == std::nullopt) {
-				m_compressStarted = false;
+				s_compressStarted = false;
 				return;
 			}
 
-			auto w = work->w;
-			auto h = work->h;
+			auto oldW = 0;
+			auto oldH = 0;
 
-			slim_lock_guard const guard(s_locks[m_cacheKey]);
+			int bound;
+			uint8_t* compressBuffer = nullptr;
+			uint8_t* pixels = nullptr;
 
-			FILE* precacheFile = _wfopen(m_cacheFile.c_str(), L"r+b");
-			if (precacheFile != nullptr) {
-				fseek(precacheFile, 0, SEEK_END);
-				m_fileOffsets[work->frame] = ftell(precacheFile);
+			if (auto item{ work->animation.get() }) {
+				auto w = work->w;
+				auto h = work->h;
 
-				int bound = LZ4_compressBound(w * h * 4);
-				uint8_t* compressBuffer = new uint8_t[bound];
-				uint32_t size = (uint32_t)LZ4_compress_default((const char*)work->pixels.get(), (char*)compressBuffer, w * h * 4, bound);
-				//totalSize += size;
+				slim_lock_guard const guard(s_locks[item->m_cacheKey]);
 
-				if (size > m_maxFrameSize && m_decompressBuffer != nullptr) {
-					delete[] m_decompressBuffer;
-					m_decompressBuffer = nullptr;
+				FILE* precacheFile = _wfopen(item->m_cacheFile.c_str(), L"r+b");
+				if (precacheFile != nullptr) {
+					fseek(precacheFile, 0, SEEK_END);
+					size_t totalSize = ftell(precacheFile);
+
+					if (w + h > oldW + oldH) {
+						bound = LZ4_compressBound(w * h * 4);
+						compressBuffer = new uint8_t[bound];
+						pixels = new uint8_t[w * h * 4];
+					}
+
+					for (int i = 0; i < item->m_frameCount; i++) {
+						item->m_fileOffsets[i] = totalSize;
+
+						rlottie::Surface surface((uint32_t*)pixels, w, h, w * 4);
+						item->m_animation->renderSync(i, surface);
+
+						uint32_t size = (uint32_t)LZ4_compress_default((const char*)pixels, (char*)compressBuffer, w * h * 4, bound);
+
+						if (size > item->m_maxFrameSize && item->m_decompressBuffer != nullptr) {
+							delete[] item->m_decompressBuffer;
+							item->m_decompressBuffer = nullptr;
+						}
+
+						item->m_maxFrameSize = max(item->m_maxFrameSize, size);
+
+						fwrite(&size, sizeof(uint32_t), 1, precacheFile);
+						fwrite(compressBuffer, sizeof(uint8_t), size, precacheFile);
+						totalSize += size;
+						totalSize += 4;
+					}
+
+					fseek(precacheFile, 0, SEEK_SET);
+					uint8_t version = CACHED_VERSION;
+					item->m_imageSize = (uint32_t)w * h * 4;
+					fwrite(&version, sizeof(uint8_t), 1, precacheFile);
+					fwrite(&item->m_maxFrameSize, sizeof(uint32_t), 1, precacheFile);
+					fwrite(&item->m_imageSize, sizeof(uint32_t), 1, precacheFile);
+					fwrite(&item->m_fps, sizeof(int32_t), 1, precacheFile);
+					fwrite(&item->m_frameCount, sizeof(size_t), 1, precacheFile);
+					fwrite(&item->m_fileOffsets[0], sizeof(uint32_t), item->m_frameCount, precacheFile);
+
+					fflush(precacheFile);
+					fclose(precacheFile);
 				}
 
-				m_maxFrameSize = max(m_maxFrameSize, size);
+				item->m_caching = false;
 
-				fwrite(&size, sizeof(uint32_t), 1, precacheFile);
-				fwrite(compressBuffer, sizeof(uint8_t), size, precacheFile);
+				oldW = w;
+				oldH = h;
+			}
 
+			if (compressBuffer) {
 				delete[] compressBuffer;
+			}
 
-				fseek(precacheFile, 0, SEEK_SET);
-				uint8_t version = CACHED_VERSION;
-				m_imageSize = (uint32_t)w * h * 4;
-				fwrite(&version, sizeof(uint8_t), 1, precacheFile);
-				fwrite(&m_maxFrameSize, sizeof(uint32_t), 1, precacheFile);
-				fwrite(&m_imageSize, sizeof(uint32_t), 1, precacheFile);
-				fwrite(&m_fps, sizeof(int32_t), 1, precacheFile);
-				fwrite(&m_frameCount, sizeof(size_t), 1, precacheFile);
-				fwrite(&m_fileOffsets[0], sizeof(uint32_t), m_frameCount, precacheFile);
-
-				fflush(precacheFile);
-				fclose(precacheFile);
+			if (pixels) {
+				delete[] pixels;
 			}
 		}
 	}
@@ -499,6 +550,10 @@ namespace winrt::RLottie::implementation
 		m_animation->size(width, height);
 
 		return winrt::Windows::Foundation::Size(width, height);
+	}
+
+	bool LottieAnimation::IsCaching() {
+		return m_caching;
 	}
 
 #pragma endregion

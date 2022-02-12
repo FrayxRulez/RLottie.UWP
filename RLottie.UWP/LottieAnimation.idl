@@ -27,5 +27,6 @@ namespace RLottie
         Double FrameRate { get; };
         Int32 TotalFrame { get; };
         Windows.Foundation.Size Size { get; };
+        Boolean IsCaching { get; };
     }
 }

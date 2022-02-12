@@ -393,7 +393,6 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="WorkQueue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\lz4\lib\lz4.c">
