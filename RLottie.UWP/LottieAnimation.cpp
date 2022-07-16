@@ -91,7 +91,7 @@ namespace winrt::RLottie::implementation
 			if (precacheFile != nullptr) {
 				uint8_t temp;
 				size_t read = fread(&temp, sizeof(uint8_t), 1, precacheFile);
-				if (read == 1 && temp == CACHED_VERSION) {
+				if (read == 1 && (temp == CACHED_VERSION || temp == CACHED_VERSION + 1)) {
 					fread(&info->m_maxFrameSize, sizeof(uint32_t), 1, precacheFile);
 					fread(&info->m_imageSize, sizeof(uint32_t), 1, precacheFile);
 					fread(&info->m_fps, sizeof(int32_t), 1, precacheFile);
@@ -186,7 +186,7 @@ namespace winrt::RLottie::implementation
 			if (precacheFile != nullptr) {
 				uint8_t temp;
 				size_t read = fread(&temp, sizeof(uint8_t), 1, precacheFile);
-				if (read == 1 && temp == CACHED_VERSION) {
+				if (read == 1 && (temp == CACHED_VERSION || temp == CACHED_VERSION + 1)) {
 					fread(&info->m_maxFrameSize, sizeof(uint32_t), 1, precacheFile);
 					fread(&info->m_imageSize, sizeof(uint32_t), 1, precacheFile);
 					fread(&info->m_fps, sizeof(int32_t), 1, precacheFile);
@@ -471,6 +471,21 @@ namespace winrt::RLottie::implementation
 
 				FILE* precacheFile = _wfopen(item->m_cacheFile.c_str(), L"r+b");
 				if (precacheFile != nullptr) {
+					uint8_t temp;
+					size_t read = fread(&temp, sizeof(uint8_t), 1, precacheFile);
+					if (read == 1 && temp == CACHED_VERSION + 1) {
+						fread(&item->m_maxFrameSize, sizeof(uint32_t), 1, precacheFile);
+						fread(&item->m_imageSize, sizeof(uint32_t), 1, precacheFile);
+						fread(&item->m_fps, sizeof(int32_t), 1, precacheFile);
+						fread(&item->m_frameCount, sizeof(size_t), 1, precacheFile);
+						item->m_fileOffsets = std::vector<uint32_t>(item->m_frameCount, 0);
+						fread(&item->m_fileOffsets[0], sizeof(uint32_t), item->m_frameCount, precacheFile);
+						fclose(precacheFile);
+
+						item->m_caching = false;
+						continue;
+					}
+
 					fseek(precacheFile, 0, SEEK_END);
 					size_t totalSize = ftell(precacheFile);
 
@@ -502,7 +517,7 @@ namespace winrt::RLottie::implementation
 					}
 
 					fseek(precacheFile, 0, SEEK_SET);
-					uint8_t version = CACHED_VERSION;
+					uint8_t version = CACHED_VERSION + 1;
 					item->m_imageSize = (uint32_t)w * h * 4;
 					fwrite(&version, sizeof(uint8_t), 1, precacheFile);
 					fwrite(&item->m_maxFrameSize, sizeof(uint32_t), 1, precacheFile);
@@ -547,13 +562,24 @@ namespace winrt::RLottie::implementation
 	{
 		size_t width;
 		size_t height;
-		m_animation->size(width, height);
+
+		if (m_animation) {
+			m_animation->size(width, height);
+		}
+		else {
+			width = 0;
+			height = 0;
+		}
 
 		return winrt::Windows::Foundation::Size(width, height);
 	}
 
 	bool LottieAnimation::IsCaching() {
 		return m_caching;
+	}
+
+	void LottieAnimation::IsCaching(bool value) {
+		m_caching = value;
 	}
 
 #pragma endregion

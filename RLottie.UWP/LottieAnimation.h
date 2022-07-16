@@ -7,6 +7,8 @@
 
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
+#define CACHE_QUEUE_SIZE 15
+
 #define CACHED_VERSION 4
 #define CACHED_HEADER_SIZE sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int32_t) + sizeof(size_t)
 // Header
@@ -58,6 +60,7 @@ namespace winrt::RLottie::implementation
 		winrt::Windows::Foundation::Size Size();
 
 		bool IsCaching();
+		void IsCaching(bool value);
 
 	private:
 		bool LoadLottieAnimation();
@@ -119,6 +122,16 @@ namespace winrt::RLottie::implementation
 
 			bool was_empty = work.empty();
 			work.push(item);
+
+			//while (CACHE_QUEUE_SIZE < work.size())
+			//{
+			//	WorkItem tmp = std::move(work.front());
+			//	work.pop();
+
+			//	if (auto animation{ tmp.animation.get() }) {
+			//		animation->IsCaching(false);
+			//	}
+			//}
 
 			lock.unlock();
 
