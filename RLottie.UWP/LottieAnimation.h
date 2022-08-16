@@ -23,6 +23,7 @@ using namespace winrt;
 using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::Graphics;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
+using namespace winrt::Windows::Storage::Streams;
 
 namespace winrt::RLottie::implementation
 {
@@ -49,6 +50,7 @@ namespace winrt::RLottie::implementation
 			}
 		}
 
+		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame);
 		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
 		void RenderSync(hstring filePath, int32_t frame);

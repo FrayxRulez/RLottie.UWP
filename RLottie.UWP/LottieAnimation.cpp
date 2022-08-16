@@ -22,6 +22,7 @@ using namespace winrt;
 using namespace winrt::RLottie;
 using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
+using namespace winrt::Windows::Storage::Streams;
 
 namespace winrt::RLottie::implementation
 {
@@ -351,6 +352,15 @@ namespace winrt::RLottie::implementation
 			piStream->Release();
 
 		delete[] pixels;
+	}
+
+	void LottieAnimation::RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame)
+	{
+		auto w = width;
+		auto h = height;
+
+		uint8_t* pixels = bitmap.data();
+		RenderSync(pixels, w, h, frame, NULL);
 	}
 
 	void LottieAnimation::RenderSync(WriteableBitmap bitmap, int32_t frame)

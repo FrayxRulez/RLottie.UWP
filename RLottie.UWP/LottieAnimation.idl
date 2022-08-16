@@ -1,3 +1,5 @@
+import "BufferSurface.idl";
+
 namespace RLottie
 {
     enum FitzModifier
@@ -21,6 +23,7 @@ namespace RLottie
 
         [default_overload]
         void RenderSync(Microsoft.Graphics.Canvas.CanvasBitmap bitmap, Int32 frame);
+        void RenderSync(Windows.Storage.Streams.IBuffer bitmap, Int32 width, Int32 height, Int32 frame);
         void RenderSync(Windows.UI.Xaml.Media.Imaging.WriteableBitmap bitmap, Int32 frame);
         void RenderSync(String filePath, Int32 frame);
 
