@@ -390,6 +390,5 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="LottieAnimation.idl" />
-    <Midl Include="BufferSurface.idl" />
   </ItemGroup>
 </Project>
