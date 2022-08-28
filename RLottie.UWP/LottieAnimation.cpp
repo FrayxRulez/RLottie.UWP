@@ -28,6 +28,7 @@ namespace winrt::RLottie::implementation
 {
 	std::map<std::string, winrt::slim_mutex> LottieAnimation::s_locks;
 
+	winrt::slim_mutex LottieAnimation::s_compressLock;
 	bool LottieAnimation::s_compressStarted;
 	std::thread LottieAnimation::s_compressWorker;
 	WorkQueue LottieAnimation::s_compressQueue;
@@ -445,6 +446,8 @@ namespace winrt::RLottie::implementation
 			if (m_precache) {
 				m_caching = true;
 				s_compressQueue.push_work(WorkItem(get_weak(), w, h));
+
+				slim_lock_guard const guard(s_compressLock);
 
 				if (!s_compressStarted) {
 					if (s_compressWorker.joinable()) {
