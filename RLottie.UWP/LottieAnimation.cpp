@@ -359,14 +359,12 @@ namespace winrt::RLottie::implementation
 	{
 		if (bitmap)
 		{
-			m_target = bitmap;
 			m_bitmap = std::make_unique<uint8_t*>(bitmap.PixelBuffer().data());
 			m_bitmapWidth = bitmap.PixelWidth();
 			m_bitmapHeight = bitmap.PixelHeight();
 		}
 		else
 		{
-			m_target = nullptr;
 			m_bitmap = nullptr;
 		}
 	}
@@ -376,8 +374,6 @@ namespace winrt::RLottie::implementation
 		if (m_bitmap == nullptr) {
 			return;
 		}
-
-		slim_lock_guard const guard(m_bitmapLock);
 
 		uint8_t* pixels = *m_bitmap.get();
 		bool rendered;
@@ -489,7 +485,7 @@ namespace winrt::RLottie::implementation
 			}
 		}
 
-		if (m_color.A == 0xff) {
+		if (m_color.A != 0x00) {
 			for (int i = 0; i < w * h * 4; i += 4) {
 				if (pixels[i + 3] != 0x00) {
 					pixels[i + 0] = m_color.B;

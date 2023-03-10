@@ -87,24 +87,6 @@ namespace winrt::RLottie::implementation
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
 		void RenderSync(hstring filePath, int32_t frame);
 
-		bool Invalidate()
-		{
-			if (m_target && m_bitmapLock.try_lock())
-			{
-				m_target.Invalidate();
-				m_bitmapLock.unlock();
-
-				return true;
-			}
-
-			return false;
-		}
-
-		Windows::Foundation::IClosable Lock()
-		{
-			return BufferLock(m_bitmapLock);
-		}
-
 		double FrameRate();
 
 		int32_t TotalFrame();
@@ -148,11 +130,9 @@ namespace winrt::RLottie::implementation
 
 		Color m_color;
 
-		WriteableBitmap m_target = nullptr;
 		std::unique_ptr<uint8_t*> m_bitmap;
 		int32_t m_bitmapWidth;
 		int32_t m_bitmapHeight;
-		winrt::slim_mutex m_bitmapLock;
 	};
 
 	class WorkItem {

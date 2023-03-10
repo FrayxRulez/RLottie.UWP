@@ -31,9 +31,6 @@ namespace RLottie
         void RenderSync(Windows.UI.Xaml.Media.Imaging.WriteableBitmap bitmap, Int32 frame);
         void RenderSync(String filePath, Int32 frame);
 
-        Boolean Invalidate();
-        Windows.Foundation.IClosable Lock();
-
         Double FrameRate { get; };
         Int32 TotalFrame { get; };
         Windows.Foundation.Size Size{ get; };
