@@ -22,6 +22,7 @@ namespace RLottie
         static LottieAnimation LoadFromData(String jsonData, Windows.Graphics.SizeInt32 size, String cacheKey, Boolean precache, Windows.Foundation.Collections.IMapView<Int32, Int32> colorReplacement, FitzModifier modifier);
 
         void SetBitmap(Windows.UI.Xaml.Media.Imaging.WriteableBitmap bitmap);
+        void SetColor(Windows.UI.Color color);
 
         void RenderSync(Int32 frame);
         [default_overload]

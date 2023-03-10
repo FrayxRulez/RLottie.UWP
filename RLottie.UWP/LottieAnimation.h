@@ -22,6 +22,7 @@ using namespace concurrency;
 using namespace winrt;
 using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::Graphics;
+using namespace winrt::Windows::UI;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Storage::Streams;
 
@@ -74,6 +75,11 @@ namespace winrt::RLottie::implementation
 		}
 
 		void SetBitmap(WriteableBitmap bitmap);
+
+		void SetColor(Color color)
+		{
+			m_color = color;
+		}
 
 		void RenderSync(int32_t frame);
 		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame);
@@ -139,6 +145,8 @@ namespace winrt::RLottie::implementation
 		std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
 		SizeInt32 m_size;
 		rlottie::FitzModifier m_modifier;
+
+		Color m_color;
 
 		WriteableBitmap m_target = nullptr;
 		std::unique_ptr<uint8_t*> m_bitmap;

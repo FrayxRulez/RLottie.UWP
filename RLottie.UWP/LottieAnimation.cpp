@@ -488,6 +488,16 @@ namespace winrt::RLottie::implementation
 				}
 			}
 		}
+
+		if (m_color.A == 0xff) {
+			for (int i = 0; i < w * h * 4; i += 4) {
+				if (pixels[i + 3] != 0x00) {
+					pixels[i + 0] = m_color.B;
+					pixels[i + 1] = m_color.G;
+					pixels[i + 2] = m_color.R;
+				}
+			}
+		}
 	}
 
 	void LottieAnimation::CompressThreadProc() {
