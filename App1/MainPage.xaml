@@ -32,7 +32,7 @@
     
     <Grid>
         <ScrollViewer>
-            <StackPanel x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <!--<controls:LottieMultiView
                     x:Name="Slot"
                     AutoPlay="True"
@@ -42,7 +42,7 @@
                 <!--<controls:LottieView Source="ms-appx:///1258816259753938.tgs" Width="200" Height="200"/>-->
                 <!--<controls:LottieView Source="ms-appx:///WalletIntroLoading.tgs" Width="200" Height="200"/>
                 <controls:LottieView Source="ms-appx:///2026484562321736022.tgs" Width="200" Height="200"/>-->
-            </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <Button Click="Button_Click">Load</Button>

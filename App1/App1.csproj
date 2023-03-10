@@ -164,17 +164,17 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.12</Version>
+      <Version>6.2.14</Version>
     </PackageReference>
     <PackageReference Include="Win2D.uwp">
       <Version>1.26.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="WalletIntroLoading.tgs" />
+    <Content Include="Files\WalletIntroLoading2.tgs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="1258816259753938.tgs" />
+    <Content Include="Files\12588162597539382.tgs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RLottie.UWP\RLottie.UWP.vcxproj">
@@ -183,7 +183,156 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="2026484562321736022.tgs" />
+    <Content Include="Files\20264845623217360222.tgs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Files\1258816259753957.tgs" />
+    <Content Include="Files\1258816259753958.tgs" />
+    <Content Include="Files\1261586479298117918.tgs" />
+    <Content Include="Files\1269403972611866901.tgs" />
+    <Content Include="Files\1269403972611866922.tgs" />
+    <Content Include="Files\1269403972611866951.tgs" />
+    <Content Include="Files\353547126392750536.tgs" />
+    <Content Include="Files\4960831168413958631.tgs" />
+    <Content Include="Files\4987994800746660332.tgs" />
+    <Content Include="Files\4988006586136921228.tgs" />
+    <Content Include="Files\5170257231215591956.tgs" />
+    <Content Include="Files\5199751145299383550.tgs" />
+    <Content Include="Files\5255838199799878504.tgs" />
+    <Content Include="Files\5274226578291690551.tgs" />
+    <Content Include="Files\5305392329870284071.tgs" />
+    <Content Include="Files\5350521973610908760.tgs" />
+    <Content Include="Files\5363843978615591392.tgs" />
+    <Content Include="Files\5366502146759988051.tgs" />
+    <Content Include="Files\5368312080338262873.tgs" />
+    <Content Include="Files\5368324170671202286.tgs" />
+    <Content Include="Files\5368833682641526070.tgs" />
+    <Content Include="Files\5370604806895311182.tgs" />
+    <Content Include="Files\5370610398942729453.tgs" />
+    <Content Include="Files\5370626028328722645.tgs" />
+    <Content Include="Files\5370689396276205290.tgs" />
+    <Content Include="Files\5370740716840425754.tgs" />
+    <Content Include="Files\5370800648814073452.tgs" />
+    <Content Include="Files\5370909925666987365.tgs" />
+    <Content Include="Files\5370915749642639187.tgs" />
+    <Content Include="Files\5370944998369925931.tgs" />
+    <Content Include="Files\5370955972011366737.tgs" />
+    <Content Include="Files\5370996121365651425.tgs" />
+    <Content Include="Files\5371006802949315307.tgs" />
+    <Content Include="Files\5371017037856380495.tgs" />
+    <Content Include="Files\5371031529076039304.tgs" />
+    <Content Include="Files\5371086676456119395.tgs" />
+    <Content Include="Files\5372914270939913780.tgs" />
+    <Content Include="Files\5372915683984152637.tgs" />
+    <Content Include="Files\5372993611870771724.tgs" />
+    <Content Include="Files\5373005951311812951.tgs" />
+    <Content Include="Files\5373098778439982772.tgs" />
+    <Content Include="Files\5373185008498384545.tgs" />
+    <Content Include="Files\5373306470173515418.tgs" />
+    <Content Include="Files\5373334920036883705.tgs" />
+    <Content Include="Files\5375052778106264337.tgs" />
+    <Content Include="Files\5375053319272144244.tgs" />
+    <Content Include="Files\5375088228766325394.tgs" />
+    <Content Include="Files\5375119650747063673.tgs" />
+    <Content Include="Files\5375131899993792435.tgs" />
+    <Content Include="Files\5375139605165119881.tgs" />
+    <Content Include="Files\5375147645343897841.tgs" />
+    <Content Include="Files\5375148985373696725.tgs" />
+    <Content Include="Files\5375159821576181655.tgs" />
+    <Content Include="Files\5375170473095077321.tgs" />
+    <Content Include="Files\5375201396859607943.tgs" />
+    <Content Include="Files\5375285788672006208.tgs" />
+    <Content Include="Files\5375297105910831597.tgs" />
+    <Content Include="Files\5375314504823347930.tgs" />
+    <Content Include="Files\5375380140513565505.tgs" />
+    <Content Include="Files\5375452661036358740.tgs" />
+    <Content Include="Files\5375541330636183881.tgs" />
+    <Content Include="Files\5375566181316959828.tgs" />
+    <Content Include="Files\5377337022102903136.tgs" />
+    <Content Include="Files\5377344615605083432.tgs" />
+    <Content Include="Files\5377371691078916778.tgs" />
+    <Content Include="Files\5377401012820647284.tgs" />
+    <Content Include="Files\5377438151402855824.tgs" />
+    <Content Include="Files\5377509400615327935.tgs" />
+    <Content Include="Files\5377548235709619284.tgs" />
+    <Content Include="Files\5377556559356238807.tgs" />
+    <Content Include="Files\5377583454441445203.tgs" />
+    <Content Include="Files\5377593010743680274.tgs" />
+    <Content Include="Files\5377618041813080281.tgs" />
+    <Content Include="Files\5377652590530010146.tgs" />
+    <Content Include="Files\5377672218530552628.tgs" />
+    <Content Include="Files\5377855798317682634.tgs" />
+    <Content Include="Files\5377857202771992680.tgs" />
+    <Content Include="Files\5377860677400536988.tgs" />
+    <Content Include="Files\5379556755690756903.tgs" />
+    <Content Include="Files\5379561106492630835.tgs" />
+    <Content Include="Files\5379568936218009290.tgs" />
+    <Content Include="Files\5379601157062663476.tgs" />
+    <Content Include="Files\5379619324774326601.tgs" />
+    <Content Include="Files\5379693052182929207.tgs" />
+    <Content Include="Files\5379694598371155194.tgs" />
+    <Content Include="Files\5379699975670209240.tgs" />
+    <Content Include="Files\5379732256644405206.tgs" />
+    <Content Include="Files\5379911373960519360.tgs" />
+    <Content Include="Files\5379931354148380165.tgs" />
+    <Content Include="Files\5379995095758018461.tgs" />
+    <Content Include="Files\5380046390552435815.tgs" />
+    <Content Include="Files\5380109565226391871.tgs" />
+    <Content Include="Files\5381855971943389791.tgs" />
+    <Content Include="Files\5381888390356541373.tgs" />
+    <Content Include="Files\5382059733781847797.tgs" />
+    <Content Include="Files\5382162598248585605.tgs" />
+    <Content Include="Files\5382248862666726708.tgs" />
+    <Content Include="Files\5382319231410904354.tgs" />
+    <Content Include="Files\5384068292417690842.tgs" />
+    <Content Include="Files\5384085485171778811.tgs" />
+    <Content Include="Files\5384186459852906360.tgs" />
+    <Content Include="Files\5384209107215456745.tgs" />
+    <Content Include="Files\5384226763826010446.tgs" />
+    <Content Include="Files\5384228859770052354.tgs" />
+    <Content Include="Files\5384307092599348179.tgs" />
+    <Content Include="Files\5384309283032668382.tgs" />
+    <Content Include="Files\5384350235545836565.tgs" />
+    <Content Include="Files\5384369627323177947.tgs" />
+    <Content Include="Files\5384398004172102616.tgs" />
+    <Content Include="Files\5384452503012121520.tgs" />
+    <Content Include="Files\5384455522374135242.tgs" />
+    <Content Include="Files\5384482477588880297.tgs" />
+    <Content Include="Files\5384545257125844967.tgs" />
+    <Content Include="Files\5384578263949515741.tgs" />
+    <Content Include="Files\5384611567125928766.tgs" />
+    <Content Include="Files\5384612769716774600.tgs" />
+    <Content Include="Files\5386307752790335363.tgs" />
+    <Content Include="Files\5386333445284698543.tgs" />
+    <Content Include="Files\5386333754522345409.tgs" />
+    <Content Include="Files\5386362023997085680.tgs" />
+    <Content Include="Files\5386399458932038755.tgs" />
+    <Content Include="Files\5386399931378440814.tgs" />
+    <Content Include="Files\5386437855939665734.tgs" />
+    <Content Include="Files\5386456277054397062.tgs" />
+    <Content Include="Files\5386458463192750725.tgs" />
+    <Content Include="Files\5386470489101179314.tgs" />
+    <Content Include="Files\5386563462258236975.tgs" />
+    <Content Include="Files\5386587088873331829.tgs" />
+    <Content Include="Files\5386657706725611717.tgs" />
+    <Content Include="Files\5386684580335983913.tgs" />
+    <Content Include="Files\5386785211419730456.tgs" />
+    <Content Include="Files\5386853570119212191.tgs" />
+    <Content Include="Files\5386856460632201117.tgs" />
+    <Content Include="Files\5386862954622753089.tgs" />
+    <Content Include="Files\5388869567638412470.tgs" />
+    <Content Include="Files\5388881284309195257.tgs" />
+    <Content Include="Files\5388929052935462187.tgs" />
+    <Content Include="Files\5391164853995969598.tgs" />
+    <Content Include="Files\5393382014898409662.tgs" />
+    <Content Include="Files\5404426291371838555.tgs" />
+    <Content Include="Files\5422526834040377698.tgs" />
+    <Content Include="Files\5456312249381555925.tgs" />
+    <Content Include="Files\750766425144033664.tgs" />
+    <Content Include="Files\773947703670342360.tgs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="5226445049943826160.tgs" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

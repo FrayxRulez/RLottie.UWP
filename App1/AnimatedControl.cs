@@ -91,14 +91,14 @@ namespace Unigram.Controls
         private void RegisterEventHandlers()
         {
             DisplayInformation.GetForCurrentView().DpiChanged += OnDpiChanged;
-            Window.Current.Activated += OnActivated;
+            //Window.Current.Activated += OnActivated;
             CompositionTarget.SurfaceContentsLost += OnSurfaceContentsLost;
         }
 
         private void UnregisterEventHandlers()
         {
             DisplayInformation.GetForCurrentView().DpiChanged -= OnDpiChanged;
-            Window.Current.Activated -= OnActivated;
+            //Window.Current.Activated -= OnActivated;
             CompositionTarget.SurfaceContentsLost -= OnSurfaceContentsLost;
         }
 

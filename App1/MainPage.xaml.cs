@@ -1,5 +1,6 @@
 ﻿using RLottie;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Unigram.Controls;
@@ -25,41 +26,75 @@ namespace App1
         private int index = 0;
         private string[] _stickers = new string[]
         {
-            "1258816259753938",
-            "WalletIntroLoading",
-            "2026484562321736022"
+            "12588162597539382",
+            "WalletIntroLoading2",
+            "20264845623217360222"
         };
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                var file = await Package.Current.InstalledLocation.GetFileAsync($"{_stickers[index]}.tgs");
-                var result = await file.CopyAsync(ApplicationData.Current.LocalFolder, file.Name, NameCollisionOption.ReplaceExisting);
+            //try
+            //{
+            //    var file = await Package.Current.InstalledLocation.GetFileAsync($"{_stickers[index]}.tgs");
+            //    var result = await file.CopyAsync(ApplicationData.Current.LocalFolder, file.Name, NameCollisionOption.ReplaceExisting);
 
-                var cache = await ApplicationData.Current.LocalFolder.TryGetItemAsync($"{file.Name}.cache");
-                if (cache != null)
-                {
-                    await file.DeleteAsync();
-                }
+            //    var cache = await ApplicationData.Current.LocalFolder.TryGetItemAsync($"{file.Name}.cache");
+            //    if (cache != null)
+            //    {
+            //        await cache.DeleteAsync();
+            //    }
 
-                //await Task.Run(() => LottieAnimation.LoadFromFile(result.Path, false, null).RenderSync(Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.png"), 512, 512, 0));
-            }
-            catch { }
+            //    //await Task.Run(() => LottieAnimation.LoadFromFile(result.Path, false, null).RenderSync(Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.png"), 512, 512, 0));
+            //}
+            //catch { }
 
             //return;
 
-            var player = new LottieView
+            var folder = await Package.Current.InstalledLocation.GetFolderAsync("Files");
+            var files = await folder.GetFilesAsync();
+
+            var x = 0;
+            var y = 0;
+
+            Panel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+
+            var file = await Package.Current.InstalledLocation.GetFileAsync("5226445049943826160.tgs");
+
+            //foreach (var file in files)
             {
-                AutoPlay = true,
-                Width = 200,
-                Height = 200,
-                Source = new Uri($"ms-appdata://local/{_stickers[index]}.tgs")
-            };
 
-            Panel.Children.Add(player);
+                var player = new LottieView
+                {
+                    AutoPlay = true,
+                    Width = 256,
+                    Height = 256,
+                    FrameSize = new Windows.Graphics.SizeInt32 { Width = 256, Height = 256 },
+                    IsCachingEnabled = true,
+                    ColorReplacements = new Dictionary<int, int> { { 0xffffff, 0x000000 } },
+                    Source = new Uri("file:///" + file.Path)
+                };
 
-            index = (index + 1) % _stickers.Length;
+                Grid.SetColumn(player, x);
+                Grid.SetRow(player, y);
+                Panel.Children.Add(player);
+
+                index = (index + 1) % _stickers.Length;
+
+                if (y == 0)
+                {
+                    Panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+                }
+
+                x++;
+
+                if (x == 20)
+                {
+                    Panel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+
+                    y++;
+                    x = 0;
+                }
+            }
         }
 
         private void Button2_Click(object sender, RoutedEventArgs e)

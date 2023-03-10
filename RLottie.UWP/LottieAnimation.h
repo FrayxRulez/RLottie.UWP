@@ -3,7 +3,7 @@
 #include "LottieAnimation.g.h"
 
 #include "rlottie.h"
-#include <queue>
+#include <stack>
 
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
@@ -50,6 +50,9 @@ namespace winrt::RLottie::implementation
 			}
 		}
 
+		void SetTarget(WriteableBitmap bitmap);
+
+		void RenderSync(int32_t frame);
 		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame);
 		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
@@ -95,6 +98,10 @@ namespace winrt::RLottie::implementation
 		std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
 		SizeInt32 m_size;
 		rlottie::FitzModifier m_modifier;
+
+		std::unique_ptr<uint8_t*> m_bitmap;
+		int32_t m_bitmapWidth;
+		int32_t m_bitmapHeight;
 	};
 
 	class WorkItem {
@@ -116,7 +123,7 @@ namespace winrt::RLottie::implementation
 	{
 		std::condition_variable work_available;
 		std::mutex work_mutex;
-		std::queue<WorkItem> work;
+		std::stack<WorkItem> work;
 
 	public:
 		void push_work(WorkItem item)
@@ -155,7 +162,7 @@ namespace winrt::RLottie::implementation
 				}
 			}
 
-			WorkItem tmp = std::move(work.front());
+			WorkItem tmp = std::move(work.top());
 			work.pop();
 			return std::make_optional<WorkItem>(tmp);
 		}
