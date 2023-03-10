@@ -29,6 +29,27 @@ namespace winrt::RLottie::implementation
 {
 	class WorkQueue;
 
+	struct BufferLock : Windows::Foundation::IClosable
+	{
+	public:
+		BufferLock(slim_mutex& mutex)
+			: m_mutex(mutex)
+		{
+			m_mutex.lock();
+		}
+
+		~BufferLock() {
+			Close();
+		}
+
+		void Close() {
+			m_mutex.unlock();
+		}
+
+	private:
+		slim_mutex& m_mutex;
+	};
+
 	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
@@ -39,24 +60,44 @@ namespace winrt::RLottie::implementation
 
 		LottieAnimation() = default;
 
-		virtual ~LottieAnimation() {
+		virtual ~LottieAnimation()
+		{
 			Close();
 		}
 
-		void Close() {
+		void Close()
+		{
 			if (m_decompressBuffer != nullptr) {
 				delete[] m_decompressBuffer;
 				m_decompressBuffer = nullptr;
 			}
 		}
 
-		void SetTarget(WriteableBitmap bitmap);
+		void SetBitmap(WriteableBitmap bitmap);
 
 		void RenderSync(int32_t frame);
 		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame);
 		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
 		void RenderSync(hstring filePath, int32_t frame);
+
+		bool Invalidate()
+		{
+			if (m_target && m_bitmapLock.try_lock())
+			{
+				m_target.Invalidate();
+				m_bitmapLock.unlock();
+
+				return true;
+			}
+
+			return false;
+		}
+
+		Windows::Foundation::IClosable Lock()
+		{
+			return BufferLock(m_bitmapLock);
+		}
 
 		double FrameRate();
 
@@ -99,9 +140,11 @@ namespace winrt::RLottie::implementation
 		SizeInt32 m_size;
 		rlottie::FitzModifier m_modifier;
 
+		WriteableBitmap m_target = nullptr;
 		std::unique_ptr<uint8_t*> m_bitmap;
 		int32_t m_bitmapWidth;
 		int32_t m_bitmapHeight;
+		winrt::slim_mutex m_bitmapLock;
 	};
 
 	class WorkItem {

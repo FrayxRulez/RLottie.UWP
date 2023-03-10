@@ -355,13 +355,18 @@ namespace winrt::RLottie::implementation
 		delete[] pixels;
 	}
 
-	void LottieAnimation::SetTarget(WriteableBitmap bitmap) {
-		if (bitmap) {
+	void LottieAnimation::SetBitmap(WriteableBitmap bitmap)
+	{
+		if (bitmap)
+		{
+			m_target = bitmap;
 			m_bitmap = std::make_unique<uint8_t*>(bitmap.PixelBuffer().data());
 			m_bitmapWidth = bitmap.PixelWidth();
 			m_bitmapHeight = bitmap.PixelHeight();
 		}
-		else {
+		else
+		{
+			m_target = nullptr;
 			m_bitmap = nullptr;
 		}
 	}
@@ -371,6 +376,8 @@ namespace winrt::RLottie::implementation
 		if (m_bitmap == nullptr) {
 			return;
 		}
+
+		slim_lock_guard const guard(m_bitmapLock);
 
 		uint8_t* pixels = *m_bitmap.get();
 		bool rendered;
