@@ -355,46 +355,12 @@ namespace winrt::RLottie::implementation
 		delete[] pixels;
 	}
 
-	void LottieAnimation::SetBitmap(WriteableBitmap bitmap)
-	{
-		if (bitmap)
-		{
-			m_bitmap = std::make_unique<uint8_t*>(bitmap.PixelBuffer().data());
-			m_bitmapWidth = bitmap.PixelWidth();
-			m_bitmapHeight = bitmap.PixelHeight();
-		}
-		else
-		{
-			m_bitmap = nullptr;
-		}
-	}
-
-	void LottieAnimation::RenderSync(int32_t frame)
-	{
-		if (m_bitmap == nullptr) {
-			return;
-		}
-
-		uint8_t* pixels = *m_bitmap.get();
-		bool rendered;
-		RenderSync(pixels, m_bitmapWidth, m_bitmapHeight, frame, NULL);
-	}
-
 	void LottieAnimation::RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame)
 	{
 		auto w = width;
 		auto h = height;
 
 		uint8_t* pixels = bitmap.data();
-		RenderSync(pixels, w, h, frame, NULL);
-	}
-
-	void LottieAnimation::RenderSync(WriteableBitmap bitmap, int32_t frame)
-	{
-		auto w = bitmap.PixelWidth();
-		auto h = bitmap.PixelHeight();
-
-		uint8_t* pixels = bitmap.PixelBuffer().data();
 		RenderSync(pixels, w, h, frame, NULL);
 	}
 

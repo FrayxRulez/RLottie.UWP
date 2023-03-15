@@ -65,14 +65,14 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v143</PlatformToolset>
-	  <Architecture>x86</Architecture>
+    <Architecture>x86</Architecture>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v143</PlatformToolset>
-	  <Architecture>$(Platform)</Architecture>
+    <Architecture>$(Platform)</Architecture>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -111,21 +111,22 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <GenerateManifest>false</GenerateManifest>
-    <OutDir>..\..\Unigram\Libraries\rlottie\$(Architecture)</OutDir>
+    <OutDir>..\..\Telegram\Libraries\rlottie\$(Architecture)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <GenerateManifest>false</GenerateManifest>
-    <OutDir>..\..\Unigram\Libraries\rlottie\$(Architecture)</OutDir>
+    <OutDir>..\..\Telegram\Libraries\rlottie\$(Architecture)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <GenerateManifest>false</GenerateManifest>
+    <OutDir>..\..\Telegram\Libraries\rlottie\$(Architecture)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GenerateManifest>false</GenerateManifest>
-    <OutDir>..\..\Unigram\Libraries\rlottie\$(Architecture)</OutDir>
+    <OutDir>..\..\Telegram\Libraries\rlottie\$(Architecture)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -330,6 +331,10 @@
     </ClInclude>
     <ClInclude Include="config.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PixelBuffer.h">
+      <DependentUpon>PixelBuffer.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="StringUtils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -445,6 +450,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="PixelBuffer.cpp">
+      <DependentUpon>PixelBuffer.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S" />
@@ -453,6 +462,9 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="LottieAnimation.idl" />
+    <Midl Include="PixelBuffer.idl">
+      <SubType>Designer</SubType>
+    </Midl>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -30,27 +30,6 @@ namespace winrt::RLottie::implementation
 {
 	class WorkQueue;
 
-	struct BufferLock : Windows::Foundation::IClosable
-	{
-	public:
-		BufferLock(slim_mutex& mutex)
-			: m_mutex(mutex)
-		{
-			m_mutex.lock();
-		}
-
-		~BufferLock() {
-			Close();
-		}
-
-		void Close() {
-			m_mutex.unlock();
-		}
-
-	private:
-		slim_mutex& m_mutex;
-	};
-
 	struct LottieAnimation : LottieAnimationT<LottieAnimation>
 	{
 	public:
@@ -74,16 +53,12 @@ namespace winrt::RLottie::implementation
 			}
 		}
 
-		void SetBitmap(WriteableBitmap bitmap);
-
 		void SetColor(Color color)
 		{
 			m_color = color;
 		}
 
-		void RenderSync(int32_t frame);
 		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame);
-		void RenderSync(WriteableBitmap bitmap, int32_t frame);
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
 		void RenderSync(hstring filePath, int32_t frame);
 
@@ -129,10 +104,6 @@ namespace winrt::RLottie::implementation
 		rlottie::FitzModifier m_modifier;
 
 		Color m_color;
-
-		std::unique_ptr<uint8_t*> m_bitmap;
-		int32_t m_bitmapWidth;
-		int32_t m_bitmapHeight;
 	};
 
 	class WorkItem {

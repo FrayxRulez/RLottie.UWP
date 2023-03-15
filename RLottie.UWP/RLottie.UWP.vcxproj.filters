@@ -390,5 +390,6 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="LottieAnimation.idl" />
+    <Midl Include="PixelBuffer.idl" />
   </ItemGroup>
 </Project>
