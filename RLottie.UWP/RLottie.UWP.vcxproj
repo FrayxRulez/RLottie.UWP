@@ -331,10 +331,6 @@
     </ClInclude>
     <ClInclude Include="config.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PixelBuffer.h">
-      <DependentUpon>PixelBuffer.idl</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
     <ClInclude Include="StringUtils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -450,10 +446,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="PixelBuffer.cpp">
-      <DependentUpon>PixelBuffer.idl</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\rlottie\src\vector\pixman\pixman-arm-neon-asm.S" />
@@ -462,9 +454,6 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="LottieAnimation.idl" />
-    <Midl Include="PixelBuffer.idl">
-      <SubType>Designer</SubType>
-    </Midl>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
