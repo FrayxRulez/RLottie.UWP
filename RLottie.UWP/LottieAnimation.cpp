@@ -18,6 +18,10 @@
 
 #include <wincodec.h>
 
+// divide by 255 and round to nearest
+// apply a fast variant: (X+127)/255 = ((X+127)*257+257)>>16 = ((X+128)*257)>>16
+#define FAST_DIV255(x) ((((x)+128) * 257) >> 16)
+
 using namespace winrt;
 using namespace winrt::RLottie;
 using namespace winrt::Microsoft::Graphics::Canvas;
@@ -453,10 +457,11 @@ namespace winrt::RLottie::implementation
 
 		if (m_color.A != 0x00) {
 			for (int i = 0; i < w * h * 4; i += 4) {
-				if (pixels[i + 3] != 0x00) {
-					pixels[i + 0] = m_color.B;
-					pixels[i + 1] = m_color.G;
-					pixels[i + 2] = m_color.R;
+				uint8_t alpha = pixels[i + 3];
+				if (alpha != 0x00) {
+					pixels[i + 0] = FAST_DIV255(m_color.B * alpha);
+					pixels[i + 1] = FAST_DIV255(m_color.G * alpha);
+					pixels[i + 2] = FAST_DIV255(m_color.R * alpha);
 				}
 			}
 		}
