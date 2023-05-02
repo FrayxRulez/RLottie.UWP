@@ -30,7 +30,8 @@ namespace RLottie
 
         Double FrameRate { get; };
         Int32 TotalFrame { get; };
-        Windows.Foundation.Size Size{ get; };
+        Int32 PixelWidth { get; };
+        Int32 PixelHeight { get; };
         Boolean IsCaching { get; };
     }
 }

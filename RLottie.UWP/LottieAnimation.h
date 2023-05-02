@@ -66,7 +66,8 @@ namespace winrt::RLottie::implementation
 
 		int32_t TotalFrame();
 
-		winrt::Windows::Foundation::Size Size();
+		int32_t PixelWidth();
+		int32_t PixelHeight();
 
 		bool IsCaching();
 		void IsCaching(bool value);
@@ -102,6 +103,8 @@ namespace winrt::RLottie::implementation
 		std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
 		SizeInt32 m_size;
 		rlottie::FitzModifier m_modifier;
+		size_t m_pixelWidth;
+		size_t m_pixelHeight;
 
 		Color m_color;
 	};

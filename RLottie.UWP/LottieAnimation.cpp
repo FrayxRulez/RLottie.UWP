@@ -257,6 +257,7 @@ namespace winrt::RLottie::implementation
 				m_frameCount = m_animation->totalFrame();
 				m_fps = (int)m_animation->frameRate();
 				m_fileOffsets = std::vector<uint32_t>(m_frameCount, 0);
+				m_animation->size(m_pixelWidth, m_pixelHeight);
 			}
 
 			if (m_fps > 60 || m_frameCount > 600 || m_frameCount <= 0) {
@@ -577,20 +578,12 @@ namespace winrt::RLottie::implementation
 		return m_frameCount;
 	}
 
-	winrt::Windows::Foundation::Size LottieAnimation::Size()
-	{
-		size_t width;
-		size_t height;
+	int32_t LottieAnimation::PixelWidth() {
+		return m_pixelWidth;
+	}
 
-		if (m_animation) {
-			m_animation->size(width, height);
-		}
-		else {
-			width = 0;
-			height = 0;
-		}
-
-		return winrt::Windows::Foundation::Size(width, height);
+	int32_t LottieAnimation::PixelHeight() {
+		return m_pixelHeight;
 	}
 
 	bool LottieAnimation::IsCaching() {
