@@ -58,23 +58,25 @@ namespace winrt::RLottie::implementation
 			m_color = color;
 		}
 
-		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame);
+		void RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame) noexcept;
 		void RenderSync(CanvasBitmap bitmap, int32_t frame);
 		void RenderSync(hstring filePath, int32_t frame);
 
-		double FrameRate();
+		double FrameRate() noexcept;
 
-		int32_t TotalFrame();
+		int32_t TotalFrame() noexcept;
 
-		int32_t PixelWidth();
-		int32_t PixelHeight();
+		int32_t PixelWidth() noexcept;
+		int32_t PixelHeight() noexcept;
 
-		bool IsCaching();
-		void IsCaching(bool value);
+		bool IsCaching() noexcept;
+		void IsCaching(bool value) noexcept;
 
 	private:
 		bool LoadLottieAnimation();
 		void RenderSync(uint8_t* pixels, size_t w, size_t h, int32_t frame, bool* rendered);
+
+		bool ReadHeader(HANDLE precacheFile, bool completed);
 
 		static void CompressThreadProc();
 
