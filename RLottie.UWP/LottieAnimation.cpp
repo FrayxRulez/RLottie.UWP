@@ -156,8 +156,8 @@ namespace winrt::RLottie::implementation
                 precacheFile = CreateFile2(info->m_cacheFile.c_str(), GENERIC_WRITE, 0, CREATE_ALWAYS, NULL);
                 if (precacheFile != INVALID_HANDLE_VALUE)
                 {
-                    uint8_t version = CACHED_VERSION;
                     DWORD write;
+                    uint8_t version = CACHED_VERSION;
                     WriteFile(precacheFile, &version, sizeof(uint8_t), &write, NULL);
                     WriteFile(precacheFile, &info->m_maxFrameSize, sizeof(uint32_t), &write, NULL);
                     WriteFile(precacheFile, &info->m_imageSize, sizeof(uint32_t), &write, NULL);
@@ -558,7 +558,7 @@ namespace winrt::RLottie::implementation
 
                 slim_lock_guard const guard(s_locks[item->m_cacheKey]);
 
-                HANDLE precacheFile = CreateFile2(item->m_cacheFile.c_str(), GENERIC_READ, 0, OPEN_EXISTING, NULL);
+                HANDLE precacheFile = CreateFile2(item->m_cacheFile.c_str(), GENERIC_READ | GENERIC_WRITE, 0, OPEN_EXISTING, NULL);
                 if (precacheFile != INVALID_HANDLE_VALUE)
                 {
                     if (item->ReadHeader(precacheFile, true))
