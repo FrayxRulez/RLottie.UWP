@@ -69,11 +69,12 @@ namespace winrt::RLottie::implementation
         return false;
     }
 
-    RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, SizeInt32 size, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
+    RLottie::LottieAnimation LottieAnimation::LoadFromFile(winrt::hstring filePath, int32_t pixelWidth, int32_t pixelHeight, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
     {
         auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
         info->m_path = filePath;
-        info->m_size = size;
+        info->m_pixelWidth = pixelWidth;
+        info->m_pixelHeight = pixelHeight;
         info->m_modifier = (rlottie::FitzModifier)modifier;
 
         long hash = 0;
@@ -112,18 +113,15 @@ namespace winrt::RLottie::implementation
                 info->m_cacheKey += std::to_string((int)modifier);
             }
 
-            if (size.Width != 256 || size.Height != 256)
-            {
-                info->m_cacheFile += L".";
-                info->m_cacheFile += std::to_wstring(size.Width);
-                info->m_cacheFile += L"x";
-                info->m_cacheFile += std::to_wstring(size.Width);
+            info->m_cacheFile += L".";
+            info->m_cacheFile += std::to_wstring(pixelWidth);
+            info->m_cacheFile += L"x";
+            info->m_cacheFile += std::to_wstring(pixelHeight);
 
-                info->m_cacheKey += ".";
-                info->m_cacheKey += std::to_string(size.Width);
-                info->m_cacheKey += "x";
-                info->m_cacheKey += std::to_string(size.Width);
-            }
+            info->m_cacheKey += ".";
+            info->m_cacheKey += std::to_string(pixelWidth);
+            info->m_cacheKey += "x";
+            info->m_cacheKey += std::to_string(pixelHeight);
 
             bool createCache = true;
             slim_lock_guard const guard(s_locks[info->m_cacheKey]);
@@ -177,11 +175,12 @@ namespace winrt::RLottie::implementation
         return info.as<RLottie::LottieAnimation>();
     }
 
-    RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, SizeInt32 size, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
+    RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, int32_t pixelWidth, int32_t pixelHeight, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
     {
         auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
         info->m_data = string_to_unmanaged(jsonData);
-        info->m_size = size;
+        info->m_pixelWidth = pixelWidth;
+        info->m_pixelHeight = pixelHeight;
         info->m_modifier = (rlottie::FitzModifier)modifier;
 
         long hash = 0;
@@ -213,13 +212,10 @@ namespace winrt::RLottie::implementation
                 info->m_cacheKey += std::to_string((int)modifier);
             }
 
-            if (size.Width != 256 || size.Height != 256)
-            {
-                info->m_cacheKey += ".";
-                info->m_cacheKey += std::to_string(size.Width);
-                info->m_cacheKey += "x";
-                info->m_cacheKey += std::to_string(size.Width);
-            }
+            info->m_cacheKey += ".";
+            info->m_cacheKey += std::to_string(pixelWidth);
+            info->m_cacheKey += "x";
+            info->m_cacheKey += std::to_string(pixelHeight);
 
             bool createCache = true;
             slim_lock_guard const guard(s_locks[info->m_cacheKey]);
@@ -298,7 +294,7 @@ namespace winrt::RLottie::implementation
                 m_frameCount = m_animation->totalFrame();
                 m_fps = (int)m_animation->frameRate();
                 m_fileOffsets = std::vector<uint32_t>(m_frameCount, 0);
-                m_animation->size(m_pixelWidth, m_pixelHeight);
+                //m_animation->size(m_pixelWidth, m_pixelHeight);
             }
 
             if (m_fps > 60 || m_frameCount > 600 || m_frameCount <= 0)
@@ -316,11 +312,11 @@ namespace winrt::RLottie::implementation
 
     void LottieAnimation::RenderSync(hstring filePath, int32_t frame)
     {
-        int32_t w = m_size.Width;
-        int32_t h = m_size.Height;
+        int32_t w = m_pixelWidth;
+        int32_t h = m_pixelHeight;
 
         uint8_t* pixels = new uint8_t[w * h * 4];
-        RenderSync(pixels, w, h, frame, NULL);
+        RenderSync(pixels, frame, NULL);
 
         IWICImagingFactory2* piFactory = NULL;
         IWICBitmapEncoder* piEncoder = NULL;
@@ -403,13 +399,10 @@ namespace winrt::RLottie::implementation
         delete[] pixels;
     }
 
-    void LottieAnimation::RenderSync(IBuffer bitmap, int32_t width, int32_t height, int32_t frame) noexcept
+    void LottieAnimation::RenderSync(IBuffer bitmap, int32_t frame) noexcept
     {
-        auto w = width;
-        auto h = height;
-
         uint8_t* pixels = bitmap.data();
-        RenderSync(pixels, w, h, frame, NULL);
+        RenderSync(pixels, frame, NULL);
     }
 
     void LottieAnimation::RenderSync(CanvasBitmap bitmap, int32_t frame)
@@ -420,7 +413,7 @@ namespace winrt::RLottie::implementation
 
         uint8_t* pixels = new uint8_t[w * h * 4];
         bool rendered;
-        RenderSync(pixels, w, h, frame, &rendered);
+        RenderSync(pixels, frame, &rendered);
 
         if (rendered)
         {
@@ -430,7 +423,7 @@ namespace winrt::RLottie::implementation
         delete[] pixels;
     }
 
-    void LottieAnimation::RenderSync(uint8_t* pixels, size_t w, size_t h, int32_t frame, bool* rendered)
+    void LottieAnimation::RenderSync(uint8_t* pixels, int32_t frame, bool* rendered)
     {
         bool loadedFromCache = false;
         if (rendered)
@@ -438,7 +431,12 @@ namespace winrt::RLottie::implementation
             *rendered = false;
         }
 
-        if (m_precache && m_maxFrameSize <= w * h * 4 && m_imageSize == w * h * 4)
+        if (m_readyToCache)
+        {
+            return;
+        }
+
+        if (m_precache && m_maxFrameSize <= m_pixelWidth * m_pixelHeight * 4 && m_imageSize == m_pixelWidth * m_pixelHeight * 4)
         {
             uint32_t offset = m_fileOffsets[frame];
             if (offset > 0)
@@ -460,7 +458,7 @@ namespace winrt::RLottie::implementation
                     {
                         if (ReadFileReturn(precacheFile, m_decompressBuffer, sizeof(uint8_t) * frameSize, &read))
                         {
-                            LZ4_decompress_safe((const char*)m_decompressBuffer, (char*)pixels, frameSize, w * h * 4);
+                            LZ4_decompress_safe((const char*)m_decompressBuffer, (char*)pixels, frameSize, m_pixelWidth * m_pixelHeight * 4);
                             loadedFromCache = true;
 
                             if (rendered)
@@ -490,7 +488,7 @@ namespace winrt::RLottie::implementation
                 return;
             }
 
-            rlottie::Surface surface((uint32_t*)pixels, w, h, w * 4);
+            rlottie::Surface surface((uint32_t*)pixels, m_pixelWidth, m_pixelHeight, m_pixelWidth * 4);
             m_animation->renderSync(frame, surface);
 
             if (rendered)
@@ -500,27 +498,13 @@ namespace winrt::RLottie::implementation
 
             if (m_precache)
             {
-                m_caching = true;
-                s_compressQueue.push_work(WorkItem(get_weak(), w, h));
-
-                slim_lock_guard const guard(s_compressLock);
-
-                if (!s_compressStarted)
-                {
-                    if (s_compressWorker.joinable())
-                    {
-                        s_compressWorker.join();
-                    }
-
-                    s_compressStarted = true;
-                    s_compressWorker = std::thread(&LottieAnimation::CompressThreadProc);
-                }
+                m_readyToCache = true;
             }
         }
 
         if (m_color.A != 0x00)
         {
-            for (int i = 0; i < w * h * 4; i += 4)
+            for (int i = 0; i < m_pixelWidth * m_pixelHeight * 4; i += 4)
             {
                 uint8_t alpha = pixels[i + 3];
                 if (alpha != 0x00)
@@ -529,6 +513,35 @@ namespace winrt::RLottie::implementation
                     pixels[i + 1] = FAST_DIV255(m_color.G * alpha);
                     pixels[i + 2] = FAST_DIV255(m_color.R * alpha);
                 }
+            }
+        }
+    }
+
+    void LottieAnimation::Cache() noexcept
+    {
+        if (m_animation == nullptr && !LoadLottieAnimation())
+        {
+            return;
+        }
+
+        if (m_precache)
+        {
+            m_readyToCache = false;
+
+            m_caching = true;
+            s_compressQueue.push_work(WorkItem(get_weak(), m_pixelWidth, m_pixelHeight));
+
+            slim_lock_guard const guard(s_compressLock);
+
+            if (!s_compressStarted)
+            {
+                if (s_compressWorker.joinable())
+                {
+                    s_compressWorker.join();
+                }
+
+                s_compressStarted = true;
+                s_compressWorker = std::thread(&LottieAnimation::CompressThreadProc);
             }
         }
     }
@@ -658,9 +671,9 @@ namespace winrt::RLottie::implementation
         return m_caching;
     }
 
-    void LottieAnimation::IsCaching(bool value) noexcept
+    bool LottieAnimation::IsReadyToCache() noexcept
     {
-        m_caching = value;
+        return m_readyToCache;
     }
 
 #pragma endregion
