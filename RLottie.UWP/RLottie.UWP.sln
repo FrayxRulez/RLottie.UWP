@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RLottie", "RLottie.UWP.vcxp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App1", "..\App1\App1.csproj", "{4417FB8C-F7E8-4D08-BA86-B3DB1CF496D1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Telegram.Native", "..\..\Telegram\Telegram.Native\Telegram.Native.vcxproj", "{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -47,6 +49,18 @@ Global
 		{4417FB8C-F7E8-4D08-BA86-B3DB1CF496D1}.Release|x86.ActiveCfg = Release|x86
 		{4417FB8C-F7E8-4D08-BA86-B3DB1CF496D1}.Release|x86.Build.0 = Release|x86
 		{4417FB8C-F7E8-4D08-BA86-B3DB1CF496D1}.Release|x86.Deploy.0 = Release|x86
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Debug|ARM64.Build.0 = Debug|ARM64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Debug|x64.ActiveCfg = Debug|x64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Debug|x64.Build.0 = Debug|x64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Debug|x86.ActiveCfg = Debug|Win32
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Debug|x86.Build.0 = Debug|Win32
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Release|ARM64.ActiveCfg = Release|ARM64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Release|ARM64.Build.0 = Release|ARM64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Release|x64.ActiveCfg = Release|x64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Release|x64.Build.0 = Release|x64
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Release|x86.ActiveCfg = Release|Win32
+		{1B521E77-46BD-4D60-89F6-D68E9BB9ABFF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

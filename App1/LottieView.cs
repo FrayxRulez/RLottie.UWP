@@ -1,25 +1,23 @@
-﻿using Microsoft.Graphics.Canvas;
+﻿//
+// Copyright Fela Ameghino 2015-2023
+//
+// Distributed under the GNU General Public License v3.0. (See accompanying
+// file LICENSE or copy at https://www.gnu.org/licenses/gpl-3.0.txt)
+//
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using RLottie;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
-using Unigram.Common;
-using Windows.ApplicationModel;
+using Telegram.Native;
 using Windows.Foundation;
 using Windows.Graphics;
-using Windows.Graphics.DirectX;
-using Windows.Graphics.Display;
-using Windows.Storage;
+using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace Unigram.Controls
+namespace Telegram.Controls
 {
     public interface IPlayerView
     {
@@ -43,14 +41,14 @@ namespace Unigram.Controls
     }
 
     [TemplatePart(Name = "Canvas", Type = typeof(CanvasControl))]
-    public class LottieView : AnimatedControl<string, LottieAnimation>, IPlayerView
+    public class LottieView : AnimatedImage<LottieAnimation>
     {
-        private bool _hideThumbnail = true;
+        private bool? _hideThumbnail;
+
+        private string _source;
 
         private double _animationFrameRate;
         private int _animationTotalFrame;
-
-        private bool _skipFrame;
 
         private int _index;
         private bool _backward;
@@ -58,6 +56,7 @@ namespace Unigram.Controls
 
         private bool _isCachingEnabled = true;
 
+        private SizeInt32 _logicalSize = new SizeInt32 { Width = 256, Height = 256 };
         private SizeInt32 _frameSize = new SizeInt32 { Width = 256, Height = 256 };
         private DecodePixelType _decodeFrameType = DecodePixelType.Physical;
 
@@ -74,12 +73,15 @@ namespace Unigram.Controls
 
         protected override void SourceChanged()
         {
-            OnSourceChanged(UriToPath(Source), _source);
+            if (Source != null)
+            {
+                OnSourceChanged(Source, _source);
+            }
         }
-        
+
         protected override void Dispose()
         {
-            if (_animation != null)
+            if (_animation != null && !_animation.IsCaching)
             {
                 _animation.Dispose();
             }
@@ -88,49 +90,79 @@ namespace Unigram.Controls
             _animation = null;
         }
 
-        protected override CanvasBitmap CreateBitmap(ICanvasResourceCreator sender)
+        protected override bool CreateBitmap(double rasterizationScale, out int width, out int height)
         {
-            bool needsCreate = _bitmap == null;
-            needsCreate |= _bitmap?.Size.Width != _frameSize.Width || _bitmap?.Size.Height != _frameSize.Height;
-
-            if (needsCreate)
+            if (_animation != null)
             {
-                var buffer = ArrayPool<byte>.Shared.Rent(_frameSize.Width * _frameSize.Height * 4);
-                var bitmap = CanvasBitmap.CreateFromBytes(sender, buffer, _frameSize.Width, _frameSize.Height, DirectXPixelFormat.B8G8R8A8UIntNormalized);
-                ArrayPool<byte>.Shared.Return(buffer);
-
-                return bitmap;
+                width = _frameSize.Width;
+                height = _frameSize.Height;
+                return true;
             }
 
-            return _bitmap;
+            width = 0;
+            height = 0;
+            return false;
         }
 
-        protected override void DrawFrame(CanvasImageSource sender, CanvasDrawingSession args)
+        protected override void DrawFrame(WriteableBitmap bitmap)
         {
-            if (_bitmap == null || _animation == null || _unloaded)
+            if (_animation == null || _unloaded)
             {
                 return;
             }
 
-            if (_flipped)
-            {
-                args.Transform = Matrix3x2.CreateScale(-1, 1, sender.Size.ToVector2() / 2);
-            }
+            //if (_flipped)
+            //{
+            //    args.Transform = Matrix3x2.CreateScale(-1, 1, sender.Size.ToVector2() / 2);
+            //}
 
-            if (sender.Size.Width >= _bitmap.Size.Width || sender.Size.Height >= _bitmap.Size.Height)
-            {
-                args.DrawImage(_bitmap,
-                    new Rect(0, 0, sender.Size.Width, sender.Size.Height));
-            }
-            else
-            {
-                args.DrawImage(_bitmap,
-                    new Rect(0, 0, sender.Size.Width, sender.Size.Height),
-                    new Rect(0, 0, _bitmap.Size.Width, _bitmap.Size.Height), 1,
-                    CanvasImageInterpolation.MultiSampleLinear);
-            }
+            //double width = _bitmap.Size.Width;
+            //double height = _bitmap.Size.Height;
 
-            if (_hideThumbnail)
+            //double ratioX = (double)sender.Size.Width / width;
+            //double ratioY = (double)sender.Size.Height / height;
+
+            //if (ratioX > ratioY)
+            //{
+            //    width = sender.Size.Width;
+            //    height *= ratioX;
+            //}
+            //else
+            //{
+            //    width *= ratioY;
+            //    height = sender.Size.Height;
+            //}
+
+            //var y = (sender.Size.Height - height) / 2;
+            //var x = (sender.Size.Width - width) / 2;
+
+            //ICanvasImage source = _bitmap;
+            //if (TintColor.HasValue)
+            //{
+            //    source = new TintEffect
+            //    {
+            //        Source = _bitmap,
+            //        Color = TintColor.Value
+            //    };
+            //}
+
+            //if (sender.Size.Width >= _logicalSize.Width || sender.Size.Height >= _logicalSize.Height)
+            //{
+            //    args.DrawImage(source,
+            //        new Rect(x, y, width, height),
+            //        new Rect(0, 0, _bitmap.Size.Width, _bitmap.Size.Height));
+            //}
+            //else
+            //{
+            //    args.DrawImage(source,
+            //        new Rect(x, y, width, height),
+            //        new Rect(0, 0, _bitmap.Size.Width, _bitmap.Size.Height), 1,
+            //        CanvasImageInterpolation.MultiSampleLinear);
+            //}
+
+            //_animation.Invalidate();
+
+            if (_hideThumbnail == true)
             {
                 _hideThumbnail = false;
 
@@ -139,35 +171,27 @@ namespace Unigram.Controls
             }
         }
 
-        protected override void NextFrame()
+        protected override bool NextFrame(PixelBuffer pixels)
         {
             var animation = _animation;
-            if (animation == null || animation.IsCaching || _canvas == null || _bitmap == null || _unloaded)
+            if (animation == null || animation.IsCaching || _unloaded)
             {
-                return;
+                return false;
             }
 
             var index = _index;
             var framesPerUpdate = _limitFps ? _animationFrameRate < 60 ? 1 : 2 : 1;
 
-            if (_animationFrameRate < 60 && !_limitFps)
-            {
-                if (_skipFrame)
-                {
-                    _skipFrame = false;
-                    return;
-                }
-
-                _skipFrame = true;
-            }
-
-            animation.RenderSync(_bitmap, index);
+            animation.RenderSync(pixels, pixels.PixelWidth, pixels.PixelHeight, index);
 
             IndexChanged?.Invoke(this, index);
+            PositionChanged?.Invoke(this, Math.Min(1, Math.Max(0, (double)index / (_animationTotalFrame - 1))));
+
+            _hideThumbnail ??= true;
 
             if (_backward)
             {
-                if (index - framesPerUpdate > 0)
+                if (index - framesPerUpdate >= 0)
                 {
                     _index -= framesPerUpdate;
                 }
@@ -178,7 +202,7 @@ namespace Unigram.Controls
 
                     if (!_isLoopingEnabled)
                     {
-                        Subscribe(false);
+                        Pause();
                     }
                 }
             }
@@ -187,22 +211,21 @@ namespace Unigram.Controls
                 if (index + framesPerUpdate < _animationTotalFrame)
                 {
                     _index += framesPerUpdate;
-                    PositionChanged?.Invoke(this, Math.Min(1, Math.Max(0, (double)(index + 1) / _animationTotalFrame)));
                 }
                 else
                 {
                     if (!_isLoopingEnabled)
                     {
-                        Subscribe(false);
+                        Pause();
                     }
                     else
                     {
                         _index = 0;
                     }
-
-                    PositionChanged?.Invoke(this, 1);
                 }
             }
+
+            return true;
         }
 
         public void Seek(double position)
@@ -218,18 +241,14 @@ namespace Unigram.Controls
                 return;
             }
 
-            _index = (int)Math.Min(_animation.TotalFrame - 1, Math.Ceiling(_animation.TotalFrame * position));
+            _index = (int)Math.Min(_animation.TotalFrame - 1, Math.Ceiling((_animation.TotalFrame - 1) * position));
         }
 
-        public int Ciccio => _animation.TotalFrame;
         public int Index => _index == int.MaxValue ? 0 : _index;
 
-        private void OnSourceChanged(Uri newValue, Uri oldValue)
-        {
-            OnSourceChanged(UriToPath(newValue), UriToPath(oldValue));
-        }
+        public double Offset => _index == int.MaxValue || _animation == null ? 0 : (double)_index / (_animation.TotalFrame - 1);
 
-        private async void OnSourceChanged(string newValue, string oldValue)
+        protected override async void OnSourceChanged(string newValue, string oldValue)
         {
             //var canvas = _canvas;
             //if (canvas == null && !Load())
@@ -251,8 +270,6 @@ namespace Unigram.Controls
 
             _source = newValue;
 
-            var shouldPlay = _shouldPlay;
-
             var animation = await Task.Run(() => LottieAnimation.LoadFromFile(newValue, _frameSize, _isCachingEnabled, ColorReplacements, FitzModifier));
             if (animation == null || !string.Equals(newValue, _source, StringComparison.OrdinalIgnoreCase))
             {
@@ -260,14 +277,17 @@ namespace Unigram.Controls
                 return;
             }
 
-            if (_shouldPlay)
-            {
-                shouldPlay = true;
-            }
+            animation.SetColor(TintColor ?? default);
 
-            _interval = TimeSpan.FromMilliseconds(Math.Floor(1000 / (_limitFps ? 30 : animation.FrameRate)));
+            var frameRate = Math.Clamp(animation.FrameRate, 30, _limitFps ? 30 : 60);
+
+            await _nextFrameLock.WaitAsync();
+
+            _needToCreateBitmap = true;
+
+            _interval = TimeSpan.FromMilliseconds(Math.Floor(1000 / frameRate));
             _animation = animation;
-            _hideThumbnail = true;
+            _hideThumbnail = null;
 
             _animationFrameRate = animation.FrameRate;
             _animationTotalFrame = animation.TotalFrame;
@@ -281,71 +301,32 @@ namespace Unigram.Controls
                 _index = 0; //_isCachingEnabled ? 0 : _animationTotalFrame - 1;
             }
 
+            lock (_drawFrameLock)
+            {
+                CreateBitmap();
+            }
+
+            _nextFrameLock.Release();
+
+            if (Load())
+            {
+                return;
+            }
+
             OnSourceChanged();
         }
 
         public bool Play(bool backward = false)
         {
-            Load();
-
-            var canvas = _canvas;
-            if (canvas == null)
-            {
-                _shouldPlay = true;
-                return false;
-            }
-
-            var animation = _animation;
-            if (animation == null)
-            {
-                _shouldPlay = true;
-                return false;
-            }
-
-            _shouldPlay = false;
             _backward = backward;
 
-            //canvas.Paused = false;
-            if (_subscribed)
-            {
-                return false;
-            }
-
-            if (_index == animation.TotalFrame - 1 && !_isLoopingEnabled && !_backward)
+            if (_animation != null && _index >= _animation.TotalFrame - 2 && !_isLoopingEnabled && !_backward)
             {
                 _index = 0;
             }
 
-            Subscribe(true);
-            return true;
-            //OnInvalidate();
-        }
 
-        private string UriToPath(Uri uri)
-        {
-            if (uri == null)
-            {
-                return null;
-            }
-
-            switch (uri.Scheme)
-            {
-                case "ms-appx":
-                    return Path.Combine(new[] { Package.Current.InstalledLocation.Path }.Union(uri.Segments.Select(x => x.Trim('/'))).ToArray());
-                case "ms-appdata":
-                    switch (uri.Host)
-                    {
-                        case "local":
-                            return Path.Combine(new[] { ApplicationData.Current.LocalFolder.Path }.Union(uri.Segments.Select(x => x.Trim('/'))).ToArray());
-                        case "temp":
-                            return Path.Combine(new[] { ApplicationData.Current.TemporaryFolder.Path }.Union(uri.Segments.Select(x => x.Trim('/'))).ToArray());
-                    }
-                    break;
-                case "file":
-                    return uri.LocalPath;
-            }
-
-            return null;
+            return base.Play();
         }
 
         #region IsCachingEnabled
@@ -404,18 +385,18 @@ namespace Unigram.Controls
 
         #region FrameSize
 
-        public SizeInt32 FrameSize
+        public Size FrameSize
         {
-            get => (SizeInt32)GetValue(FrameSizeProperty);
+            get => (Size)GetValue(FrameSizeProperty);
             set => SetValue(FrameSizeProperty, value);
         }
 
         public static readonly DependencyProperty FrameSizeProperty =
-            DependencyProperty.Register("FrameSize", typeof(SizeInt32), typeof(LottieView), new PropertyMetadata(new SizeInt32 { Width = 256, Height = 256 }, OnFrameSizeChanged));
+            DependencyProperty.Register("FrameSize", typeof(Size), typeof(LottieView), new PropertyMetadata(new Size(256, 256), OnFrameSizeChanged));
 
         private static void OnFrameSizeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ((LottieView)d).OnFrameSizeChanged((SizeInt32)e.NewValue, ((LottieView)d)._decodeFrameType);
+            ((LottieView)d).OnFrameSizeChanged((Size)e.NewValue, ((LottieView)d)._decodeFrameType);
         }
 
         #endregion
@@ -440,12 +421,22 @@ namespace Unigram.Controls
 
         private void OnFrameSizeChanged(SizeInt32 frameSize, DecodePixelType decodeFrameType)
         {
+            OnFrameSizeChanged(new Size(frameSize.Width, frameSize.Height), decodeFrameType);
+        }
+
+        private void OnFrameSizeChanged(Size frameSize, DecodePixelType decodeFrameType)
+        {
             if (decodeFrameType == DecodePixelType.Logical)
             {
                 // TODO: subscribe for DPI changed event
-                var dpi = DisplayInformation.GetForCurrentView().LogicalDpi / 96.0f;
+                var dpi = XamlRoot.RasterizationScale;
 
                 _decodeFrameType = decodeFrameType;
+                _logicalSize = new SizeInt32
+                {
+                    Width = (int)frameSize.Width,
+                    Height = (int)frameSize.Height
+                };
                 _frameSize = new SizeInt32
                 {
                     Width = (int)(frameSize.Width * dpi),
@@ -455,27 +446,18 @@ namespace Unigram.Controls
             else
             {
                 _decodeFrameType = decodeFrameType;
-                _frameSize = frameSize;
+                _logicalSize = new SizeInt32
+                {
+                    Width = (int)frameSize.Width,
+                    Height = (int)frameSize.Height
+                };
+                _frameSize = new SizeInt32
+                {
+                    Width = (int)frameSize.Width,
+                    Height = (int)frameSize.Height
+                };
             }
         }
-
-        #region Source
-
-        public Uri Source
-        {
-            get => (Uri)GetValue(SourceProperty);
-            set => SetValue(SourceProperty, value);
-        }
-
-        public static readonly DependencyProperty SourceProperty =
-            DependencyProperty.Register("Source", typeof(Uri), typeof(LottieView), new PropertyMetadata(null, OnSourceChanged));
-
-        private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            ((LottieView)d).OnSourceChanged((Uri)e.NewValue, (Uri)e.OldValue);
-        }
-
-        #endregion
 
         public event EventHandler<double> PositionChanged;
         public event EventHandler<int> IndexChanged;
@@ -485,5 +467,14 @@ namespace Unigram.Controls
         public IReadOnlyDictionary<int, int> ColorReplacements { get; set; }
 
         public FitzModifier FitzModifier { get; set; }
+
+        //private Color? _tintColor;
+        //public Color? TintColor
+        //{
+        //    get => _tintColor;
+        //    set => _animation?.SetColor((_tintColor = value) ?? default);
+        //}
+
+        public Color? TintColor { get; set; }
     }
 }

@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Telegram.Controls.AnimatedImage2">
+    <Position X="6.25" Y="2.25" Width="2.5" />
+    <NestedTypes>
+      <Enum Name="Telegram.Controls.AnimatedImage2.PlayingState" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>AnimatedImage2.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAgACAAgBQAAAIQAIACAEAAQAAIAAAiAAAAAAAAAA=</HashCode>
+      <FileName>AnimatedImage2.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Telegram.Controls.AnimatedImagePresenter">
+    <Position X="14.75" Y="1.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>CAgAAACAAmAmQAEBAAIQAA0IgIAJCAAgoREAggAAAAA=</HashCode>
+      <FileName>AnimatedImage2.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Telegram.Controls.AnimatedImageTask">
+    <Position X="18.25" Y="2" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAABAAAAAAIAIAgAAAIgAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>AnimatedImage2.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Telegram.Controls.AnimatedImageConfiguration">
+    <Position X="9.5" Y="2.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAgAICgAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>AnimatedImage2.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Telegram.Controls.AnimatedImageLoader">
+    <Position X="12.5" Y="1.75" Width="2" />
+    <NestedTypes>
+      <Class Name="Telegram.Controls.AnimatedImageLoader.WorkItem" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>AnimatedImage2.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="Telegram.Controls.AnimatedImageLoader.WorkQueue" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>AnimatedImage2.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAgAgRAQkAAgAAAAAACABAAAAAAAEAACAAAAhAAAAAA=</HashCode>
+      <FileName>AnimatedImage2.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

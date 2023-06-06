@@ -1,14 +1,13 @@
-﻿<Page
-    x:Class="App1.MainPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:App1"
-    xmlns:controls="using:Unigram.Controls"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:xaml="using:Microsoft.Graphics.Canvas.UI.Xaml"
-    mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+﻿<Page x:Class="App1.MainPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:App1"
+      xmlns:controls="using:Telegram.Controls"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:xaml="using:Microsoft.Graphics.Canvas.UI.Xaml"
+      mc:Ignorable="d"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
         <Style TargetType="controls:LottieView">
@@ -17,35 +16,63 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="controls:LottieView">
-                        <Grid x:Name="LayoutRoot">
-                            <Image x:Name="Canvas"
-                                   Stretch="Fill"
-                                   AutomationProperties.AccessibilityView="Raw"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Stretch" />
-                        </Grid>
+                        <Border x:Name="LayoutRoot">
+                            <Border.Background>
+                                <ImageBrush x:Name="Canvas"
+                                            Stretch="UniformToFill"
+                                            AlignmentX="Center"
+                                            AlignmentY="Center" />
+                            </Border.Background>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="controls:AnimatedImage2">
+            <Setter Property="IsTabStop"
+                    Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="controls:AnimatedImage2">
+                        <Border x:Name="LayoutRoot">
+                            <Border.Background>
+                                <ImageBrush x:Name="Canvas"
+                                            Stretch="UniformToFill"
+                                            AlignmentX="Center"
+                                            AlignmentY="Center" />
+                            </Border.Background>
+                        </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
     </Page.Resources>
-    
+
     <Grid>
-        <ScrollViewer>
-            <Grid x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!--<controls:LottieMultiView
-                    x:Name="Slot"
-                    AutoPlay="True"
-                    Value="0"/>-->
-
-
-                <!--<controls:LottieView Source="ms-appx:///1258816259753938.tgs" Width="200" Height="200"/>-->
-                <!--<controls:LottieView Source="ms-appx:///WalletIntroLoading.tgs" Width="200" Height="200"/>
-                <controls:LottieView Source="ms-appx:///2026484562321736022.tgs" Width="200" Height="200"/>-->
+        <StackPanel HorizontalAlignment="Stretch"
+                    VerticalAlignment="Center">
+            <Grid x:Name="Test"
+                  Width="180"
+                  Height="180">
+                <Popup x:Name="InteractionsPopup">
+                </Popup>
             </Grid>
-        </ScrollViewer>
+            <VariableSizedWrapGrid x:Name="Interactions"
+                                   ItemWidth="48"
+                                   ItemHeight="48"
+                                   Orientation="Horizontal" />
+        </StackPanel>
 
-        <Button Click="Button_Click">Load</Button>
-        <Button Click="Button2_Click" VerticalAlignment="Bottom">Unload</Button>
+        <StackPanel>
+            <Button Click="Button_Click">Change source</Button>
+            <Button Click="Button3_Click">Play</Button>
+            <Button Click="Button4_Click">Pause</Button>
+            <Button Click="Button2_Click">Unload</Button>
+            <Button Click="Button5_Click">Force GC</Button>
+            <Button x:Name="Batong"
+                    Content="Spawn"
+                    Click="Button_Click_1"
+                    ClickMode="Press" />
+        </StackPanel>
     </Grid>
 </Page>

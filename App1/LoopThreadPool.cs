@@ -1,9 +1,31 @@
-﻿using System;
+﻿//
+// Copyright Fela Ameghino 2015-2023
+//
+// Distributed under the GNU General Public License v3.0. (See accompanying
+// file LICENSE or copy at https://www.gnu.org/licenses/gpl-3.0.txt)
+//
+using System;
+using System.Collections.Concurrent;
 
-namespace Unigram.Common
+namespace Telegram.Common
 {
     public class LoopThreadPool
     {
+        private static readonly ConcurrentDictionary<TimeSpan, LoopThread> _specificFrameRate = new();
+
+        public static LoopThread Get(TimeSpan frameRate)
+        {
+            if (_specificFrameRate.TryGetValue(frameRate, out LoopThread thread))
+            {
+                return thread;
+            }
+
+            thread = new LoopThread(frameRate);
+            _specificFrameRate[frameRate] = thread;
+
+            return thread;
+        }
+
         private readonly LoopThread[] _pool;
         private int _lastUsed = -1;
 

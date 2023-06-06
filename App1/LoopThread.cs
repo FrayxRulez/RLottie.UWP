@@ -1,23 +1,35 @@
-﻿using System;
+﻿//
+// Copyright Fela Ameghino 2015-2023
+//
+// Distributed under the GNU General Public License v3.0. (See accompanying
+// file LICENSE or copy at https://www.gnu.org/licenses/gpl-3.0.txt)
+//
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security;
 using System.Threading;
+using Windows.System.Threading;
 using Windows.UI.Xaml.Media;
 
-namespace Unigram.Common
+namespace Telegram.Common
 {
     public class LoopThread
     {
         private TimeSpan _interval;
         private TimeSpan _elapsed;
 
-        private readonly Timer _timerTick;
+        private readonly object _timerLock = new();
+        private readonly Timer _timer;
 
-        private bool _dropTick;
         private bool _dropInvalidate;
+
+        public TimeSpan Interval => _interval;
 
         public LoopThread(TimeSpan interval)
         {
             _interval = interval;
-            _timerTick = new Timer(OnTick, null, Timeout.Infinite, Timeout.Infinite);
+            _timer = new Timer(OnTick, null, Timeout.Infinite, Timeout.Infinite);
         }
 
         [ThreadStatic]
@@ -32,16 +44,59 @@ namespace Unigram.Common
         private static LoopThread _chats;
         public static LoopThread Chats => _chats ??= new LoopThread(TimeSpan.FromMilliseconds(1000 / 60));
 
-        private void OnTick(object state)
+        private unsafe void OnTick(object state)
         {
-            if (_dropTick)
-            {
-                return;
-            }
+            _tick?.Invoke(this, EventArgs.Empty);
+        }
 
-            _dropTick = true;
-            _tick?.Invoke(state, EventArgs.Empty);
-            _dropTick = false;
+        private int _count;
+
+        private event EventHandler _tick;
+        public event EventHandler Tick
+        {
+            add
+            {
+                lock (_timerLock)
+                {
+                    if (_tick == null) _timer.Change(TimeSpan.Zero, _interval);
+                    _tick += value;
+                    _count++;
+                }
+            }
+            remove
+            {
+                lock (_timerLock)
+                {
+                    _count--;
+                    _tick -= value;
+                    if (_tick == null) _timer.Change(Timeout.Infinite, Timeout.Infinite);
+                }
+            }
+        }
+
+        #region Legacy
+
+        private event EventHandler _invalidate;
+        public event EventHandler Invalidate
+        {
+            add
+            {
+                if (_invalidate == null)
+                {
+                    CompositionTarget.Rendering += OnInvalidate;
+                }
+
+                _invalidate += value;
+            }
+            remove
+            {
+                _invalidate -= value;
+
+                if (_invalidate == null)
+                {
+                    CompositionTarget.Rendering -= OnInvalidate;
+                }
+            }
         }
 
         private void OnInvalidate(object sender, object e)
@@ -61,34 +116,6 @@ namespace Unigram.Common
             _dropInvalidate = false;
         }
 
-        private event EventHandler _tick;
-        public event EventHandler Tick
-        {
-            add
-            {
-                if (_tick == null) _timerTick.Change(TimeSpan.Zero, _interval);
-                _tick += value;
-            }
-            remove
-            {
-                _tick -= value;
-                if (_tick == null) _timerTick.Change(Timeout.Infinite, Timeout.Infinite);
-            }
-        }
-
-        private event EventHandler _invalidate;
-        public event EventHandler Invalidate
-        {
-            add
-            {
-                if (_invalidate == null) CompositionTarget.Rendering += OnInvalidate;
-                _invalidate += value;
-            }
-            remove
-            {
-                _invalidate -= value;
-                if (_invalidate == null) CompositionTarget.Rendering -= OnInvalidate;
-            }
-        }
+        #endregion
     }
 }

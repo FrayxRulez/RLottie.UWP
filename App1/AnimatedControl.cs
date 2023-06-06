@@ -1,135 +1,189 @@
-﻿using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Xaml;
+﻿//
+// Copyright Fela Ameghino 2015-2023
+//
+// Distributed under the GNU General Public License v3.0. (See accompanying
+// file LICENSE or copy at https://www.gnu.org/licenses/gpl-3.0.txt)
+//
 using System;
-using System.Numerics;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Unigram.Common;
-using Windows.Graphics.Display;
-using Windows.System.Threading;
-using Windows.UI;
+using Telegram.Common;
+using Telegram.Native;
+using Windows.Foundation;
+using Windows.Graphics;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Automation;
-using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 
-namespace Unigram.Controls
+namespace Telegram.Controls
 {
-    [TemplatePart(Name = "Canvas", Type = typeof(Image))]
-    public abstract class AnimatedControl<TSource, TAnimation> : Control, IPlayerView
+    public abstract class AnimatedImage : Control
     {
-        private Vector2 _currentSize;
-        private float _currentDpi;
-        private bool _visible = true;
+        public abstract void Display();
 
-        protected CanvasImageSource _surface;
-        protected CanvasBitmap _bitmap;
+        #region Source
 
-        private Grid _layoutRoot;
-        protected Image _canvas;
+        public string Source
+        {
+            get => (string)GetValue(SourceProperty);
+            set => SetValue(SourceProperty, value);
+        }
 
-        protected TSource _source;
+        public static readonly DependencyProperty SourceProperty =
+            DependencyProperty.Register("Source", typeof(string), typeof(AnimatedImage), new PropertyMetadata(null, OnSourceChanged));
+
+        private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            ((AnimatedImage)d).OnSourceChanged((string)e.NewValue, (string)e.OldValue);
+        }
+
+        protected abstract void OnSourceChanged(string newValue, string oldValue);
+
+        #endregion
+    }
+
+    // This is a lightweight fork of AnimatedControl
+    // that just uses a WriteableBitmap rather than DirectX
+    [TemplatePart(Name = "Canvas", Type = typeof(Image))]
+    public abstract class AnimatedImage<TAnimation> : AnimatedImage, IPlayerView
+    {
+        protected double _rasterizationScale;
+        protected bool _active = true;
+        protected bool _visible = true;
+
+        private readonly bool _autoPause;
+
+        private WriteableBitmap _bitmap0;
+        private WriteableBitmap _bitmap1;
+
+        private PixelBuffer _foregroundFrame;
+        private readonly ConcurrentQueue<PixelBuffer> _backgroundQueue = new();
+
+        private bool _bitmapClean = true;
+        protected bool _needToCreateBitmap = true;
+
+        protected ImageBrush _canvas;
+
         protected TAnimation _animation;
 
-        protected bool _shouldPlay;
+        protected bool? _playing;
 
         protected bool _subscribed;
         protected bool _unsubscribe;
 
+        private bool _hasInitialLoadedEventFired;
         protected bool _unloaded;
 
         protected bool _isLoopingEnabled = true;
-        protected Stretch _stretch = Stretch.Uniform;
 
-        private readonly object _recreateLock = new();
-        private readonly object _drawFrameLock = new();
-        private readonly SemaphoreSlim _nextFrameLock = new(1, 1);
-
-        private ThreadPoolTimer _timer;
+        protected readonly object _drawFrameLock = new();
+        protected readonly SemaphoreSlim _nextFrameLock = new(1, 1);
 
         protected TimeSpan _interval;
-        private TimeSpan _elapsed;
+        protected TimeSpan _elapsed;
 
         // Better hardware detection?
         protected readonly bool _limitFps = true;
 
-        protected AnimatedControl(bool? limitFps)
+        protected readonly DispatcherQueue _dispatcher;
+        private LoopThread _timer;
+
+        private int _loaded;
+
+        protected AnimatedImage(bool? limitFps, bool autoPause = true)
         {
+            _interval = TimeSpan.FromMilliseconds(Math.Floor(1000d / 30));
+            _autoPause = autoPause;
+
             _limitFps = limitFps ?? !Windows.UI.Composition.CompositionCapabilities.GetForCurrentView().AreEffectsFast();
-            _currentDpi = DisplayInformation.GetForCurrentView().LogicalDpi;
+            _dispatcher = DispatcherQueue.GetForCurrentThread();
 
-            SizeChanged += OnSizeChanged;
-        }
-
-        ~AnimatedControl()
-        {
-            System.Diagnostics.Debug.WriteLine("~AnimatedControl");
+            Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
         }
 
         protected override void OnApplyTemplate()
         {
-            var canvas = GetTemplateChild("Canvas") as Image;
+            Logger.Info(IsLoaded);
+            RegisterEventHandlers();
+
+            var canvas = GetTemplateChild("Canvas") as ImageBrush;
             if (canvas == null)
             {
                 return;
             }
 
             _canvas = canvas;
+            _canvas.Stretch = Stretch;
 
-            _layoutRoot = GetTemplateChild("LayoutRoot") as Grid;
-            _layoutRoot.Loaded += OnLoaded;
-            _layoutRoot.Loading += OnLoading;
-            _layoutRoot.Unloaded += OnUnloaded;
-
-            SourceChanged();
-
+            OnLoaded();
             base.OnApplyTemplate();
         }
 
         private void RegisterEventHandlers()
         {
-            DisplayInformation.GetForCurrentView().DpiChanged += OnDpiChanged;
-            //Window.Current.Activated += OnActivated;
-            CompositionTarget.SurfaceContentsLost += OnSurfaceContentsLost;
+            _rasterizationScale = XamlRoot.RasterizationScale;
+            _visible = XamlRoot.IsHostVisible;
+            _active = !_autoPause || Window.Current.CoreWindow.ActivationMode != CoreWindowActivationMode.Deactivated || !_isLoopingEnabled;
+
+            if (_hasInitialLoadedEventFired)
+            {
+                return;
+            }
+
+            XamlRoot.Changed += OnXamlRootChanged;
+
+            if (_autoPause)
+            {
+                //Window.Current.Activated += OnActivated;
+            }
+
+            _hasInitialLoadedEventFired = true;
         }
 
         private void UnregisterEventHandlers()
         {
-            DisplayInformation.GetForCurrentView().DpiChanged -= OnDpiChanged;
-            //Window.Current.Activated -= OnActivated;
-            CompositionTarget.SurfaceContentsLost -= OnSurfaceContentsLost;
-        }
+            XamlRoot.Changed -= OnXamlRootChanged;
 
-        private void OnDpiChanged(DisplayInformation sender, object args)
-        {
-            lock (_drawFrameLock)
+            if (_autoPause)
             {
-                _currentDpi = sender.LogicalDpi;
-
-                Changed();
+                //Window.Current.Activated -= OnActivated;
             }
+
+            _hasInitialLoadedEventFired = false;
         }
 
-        private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+        private void OnXamlRootChanged(XamlRoot sender, XamlRootChangedEventArgs args)
         {
             lock (_drawFrameLock)
             {
-                _currentSize = e.NewSize.ToVector2();
+                if (_rasterizationScale != sender.RasterizationScale)
+                {
+                    _rasterizationScale = sender.RasterizationScale;
+                    Changed();
+                }
 
-                Changed();
-            }
-        }
+#warning TODO: this method logic should be improved
+                if (_visible == sender.IsHostVisible)
+                {
+                    return;
+                }
 
-        private void OnSurfaceContentsLost(object sender, object e)
-        {
-            lock (_drawFrameLock)
-            {
-                _surface = null;
-                _bitmap = null;
+                _visible = sender.IsHostVisible;
 
-                Changed();
+                if (sender.IsHostVisible)
+                {
+                    Changed();
+                }
+                else
+                {
+                    Subscribe(false);
+                }
             }
         }
 
@@ -137,55 +191,52 @@ namespace Unigram.Controls
         {
             lock (_drawFrameLock)
             {
-                if (_visible == (e.WindowActivationState != CoreWindowActivationState.Deactivated))
+                var active = e.WindowActivationState != CoreWindowActivationState.Deactivated || !_isLoopingEnabled;
+                if (active == _active)
                 {
                     return;
                 }
 
-                _visible = e.WindowActivationState != CoreWindowActivationState.Deactivated;
+                _active = active;
 
-                if (e.WindowActivationState != CoreWindowActivationState.Deactivated)
+                if (active)
                 {
-                    if (_shouldPlay && _source != null && _layoutRoot.IsLoaded)
-                    {
-                        Play();
-                    }
+                    OnSourceChanged();
                 }
                 else
                 {
-                    _shouldPlay = _subscribed;
                     Subscribe(false);
                 }
             }
         }
 
-        private void Changed(bool force = false)
+        private void Changed(bool force = false, bool tryLoad = true)
         {
-            if (_canvas == null)
+            if (_canvas == null || !_visible)
             {
-                // Load is going to invoke Changed again
-                Load();
+                if (tryLoad)
+                {
+                    // Load is going to invoke Changed again
+                    Load();
+                }
+
                 return;
             }
 
-            lock (_recreateLock)
+            lock (_drawFrameLock)
             {
-                var newDpi = _currentDpi;
-                var newSize = _currentSize;
+                var newDpi = _rasterizationScale;
 
-                bool needsCreate = (_surface == null);
-                needsCreate |= (_surface?.Dpi != newDpi);
-                needsCreate |= (_surface?.Size.Width != newSize.X || _surface?.Size.Height != newSize.Y);
+                bool needsCreate = _bitmap0 == null;
+                needsCreate |= _rasterizationScale != newDpi;
                 needsCreate |= force;
 
-                if (needsCreate && newSize.X > 0 && newSize.Y > 0)
+                if (needsCreate)
                 {
                     try
                     {
-                        _surface = new CanvasImageSource(CanvasDevice.GetSharedDevice(), newSize.X, newSize.Y, newDpi, CanvasAlphaMode.Premultiplied);
-                        _canvas.Source = _surface;
-
                         DrawFrame();
+                        OnSourceChanged();
                     }
                     catch
                     {
@@ -197,27 +248,12 @@ namespace Unigram.Controls
 
         protected bool Load()
         {
-            if (_unloaded && _layoutRoot != null && _layoutRoot.IsLoaded)
+            if (/*_unloaded && _layoutRoot != null &&*/ _loaded > 0)
             {
-                while (_layoutRoot.Children.Count > 0)
-                {
-                    _layoutRoot.Children.Remove(_layoutRoot.Children[0]);
-                }
-
-                _canvas = new Image
-                {
-                    Stretch = Stretch.Fill,
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    VerticalAlignment = VerticalAlignment.Stretch
-                };
-
-                AutomationProperties.SetAccessibilityView(_canvas, AccessibilityView.Raw);
-
-                _layoutRoot.Children.Add(_canvas);
-                Changed();
+                Changed(tryLoad: false);
 
                 _unloaded = false;
-                SourceChanged();
+                OnLoaded();
 
                 return true;
             }
@@ -225,37 +261,57 @@ namespace Unigram.Controls
             return false;
         }
 
-        private void OnLoading(FrameworkElement sender, object args)
+        protected virtual void OnLoaded()
         {
-            Load();
+            if (_animation != null)
+            {
+                OnSourceChanged();
+            }
+            else
+            {
+                SourceChanged();
+            }
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            Logger.Info(IsLoaded);
+            Debug.Assert(IsLoaded);
+
+            _loaded++;
+
             Load();
             RegisterEventHandlers();
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            Logger.Info(IsLoaded);
+            Debug.Assert(!IsLoaded);
+
+            _loaded--;
+
+            if (_loaded > 0)
+            {
+                return;
+            }
+
             Unload();
             UnregisterEventHandlers();
         }
 
         public async void Unload()
         {
-            _shouldPlay = false;
+            _playing = null;
             _unloaded = true;
             Subscribe(false);
 
-            lock (_recreateLock)
+            lock (_drawFrameLock)
             {
-                //_canvas.Source = new BitmapImage();
-                _layoutRoot.Children.Remove(_canvas);
-                _canvas = null;
-
-                _surface?.Device.Trim();
-                _surface = null;
+                if (_canvas != null)
+                {
+                    _canvas.ImageSource = null;
+                }
             }
 
             await _nextFrameLock.WaitAsync();
@@ -270,8 +326,13 @@ namespace Unigram.Controls
 
             lock (_drawFrameLock)
             {
-                _bitmap?.Dispose();
-                _bitmap = null;
+                _foregroundFrame = null;
+                _backgroundQueue.Clear();
+
+                _bitmap0 = null;
+                _bitmap1 = null;
+
+                _needToCreateBitmap = true;
             }
         }
 
@@ -287,7 +348,7 @@ namespace Unigram.Controls
                     var args = e as RenderingEventArgs;
                     var diff = args.RenderingTime - _elapsed;
 
-                    if (diff < _interval / 3 * 2 || !_visible)
+                    if (diff < _interval / 3 * 2 || !_active)
                     {
                         return;
                     }
@@ -304,127 +365,231 @@ namespace Unigram.Controls
             }
         }
 
-        public void DrawFrame()
+        public void Invalidate()
         {
-            if (_surface == null)
+            lock (_drawFrameLock)
+            {
+                DrawFrame();
+            }
+        }
+
+        protected void DrawFrame()
+        {
+            if (_animation == null || _unloaded || !_visible)
             {
                 return;
             }
 
-            try
+            if (_needToCreateBitmap)
             {
-                using (var session = _surface.CreateDrawingSession(Colors.Transparent))
+                CreateBitmap();
+            }
+            else
+            {
+                var pixels = Interlocked.Exchange(ref _foregroundFrame, null);
+                if (pixels != null)
                 {
-                    if (_animation == null || _unloaded)
+                    // We must check if the bitmap is still valid
+                    if (_canvas.ImageSource is WriteableBitmap bitmap && (_bitmap0 == bitmap || _bitmap1 == bitmap))
                     {
-                        return;
+                        _backgroundQueue.Enqueue(new PixelBuffer(bitmap));
                     }
 
-                    if (_bitmap == null)
+                    pixels.Source.Invalidate();
+
+                    _canvas.ImageSource = pixels.Source;
+                    DrawFrame(pixels.Source);
+                }
+            }
+        }
+
+        protected async Task CreateBitmapAsync()
+        {
+            await _nextFrameLock.WaitAsync();
+
+            lock (_drawFrameLock)
+            {
+                CreateBitmap();
+            }
+
+            _nextFrameLock.Release();
+        }
+
+        protected void CreateBitmap()
+        {
+            try
+            {
+                var temp = CreateBitmap(_rasterizationScale, out int width, out int height);
+
+                var needsCreate = _bitmap0 == null || _bitmap1 == null;
+                needsCreate |= _bitmap0?.PixelWidth != width || _bitmap0?.PixelHeight != height;
+                needsCreate |= _bitmap1?.PixelWidth != width || _bitmap1?.PixelHeight != height;
+
+                if (temp && needsCreate && _animation != null && width > 0 && height > 0)
+                {
+                    _bitmap0 = new WriteableBitmap(width, height);
+                    _bitmap1 = new WriteableBitmap(width, height);
+                    _bitmapClean = true;
+
+                    _foregroundFrame = null;
+                    _backgroundQueue.Clear();
+
+                    _backgroundQueue.Enqueue(new PixelBuffer(_bitmap0));
+                    _backgroundQueue.Enqueue(new PixelBuffer(_bitmap1));
+                }
+
+                _needToCreateBitmap = _animation == null;
+            }
+            catch
+            {
+                _bitmap0 = null;
+                _bitmap1 = null;
+
+                _foregroundFrame = null;
+                _backgroundQueue.Clear();
+
+                _needToCreateBitmap = true;
+            }
+        }
+
+        protected abstract bool CreateBitmap(double dpi, out int width, out int height);
+
+        protected SizeInt32 GetDpiAwareSize(Size size)
+        {
+            return GetDpiAwareSize(size.Width, size.Height);
+        }
+
+        protected SizeInt32 GetDpiAwareSize(double width, double height)
+        {
+            return new SizeInt32
+            {
+                Width = (int)(width * _rasterizationScale),
+                Height = (int)(height * _rasterizationScale)
+            };
+        }
+
+        protected int GetDpiAwareSize(double size)
+        {
+            return (int)(size * _rasterizationScale);
+        }
+
+        protected abstract void DrawFrame(WriteableBitmap args);
+
+        protected void PrepareNextFrame()
+        {
+            PrepareNextFrame(null, null);
+        }
+
+        private void PrepareNextFrame(object sender, object e)
+        {
+            if (_nextFrameLock.Wait(0))
+            {
+                if (TryDequeueOrExchange(out PixelBuffer frame))
+                {
+                    if (NextFrame(frame))
                     {
-                        _bitmap = CreateBitmap(session);
+                        var dropped = Interlocked.Exchange(ref _foregroundFrame, frame);
+                        if (dropped != null)
+                        {
+                            _backgroundQueue.Enqueue(dropped);
+                        }
                     }
                     else
                     {
-                        DrawFrame(_surface, session);
+                        _backgroundQueue.Enqueue(frame);
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (_surface != null && _surface.Device.IsDeviceLost(ex.HResult))
-                {
-                    _surface = null;
-                    _bitmap = null;
 
-                    Changed();
+                    _bitmapClean = false;
                 }
-                else
-                {
-                    Unload();
-                }
+
+                _nextFrameLock.Release();
             }
         }
 
-        protected abstract CanvasBitmap CreateBitmap(ICanvasResourceCreator sender);
-
-        protected abstract void DrawFrame(CanvasImageSource sender, CanvasDrawingSession args);
-
-        private void PrepareNextFrame(ThreadPoolTimer timer)
+        private bool TryDequeueOrExchange(out PixelBuffer frame)
         {
-            //lock (_nextFrameLock)
-            _nextFrameLock.Wait();
+            if (_needToCreateBitmap)
             {
-                NextFrame();
+                frame = null;
+                return false;
             }
-            _nextFrameLock.Release();
+
+            if (_backgroundQueue.TryDequeue(out frame))
+            {
+                return true;
+            }
+
+            // TODO: this looks quite dangerous...
+            frame = Interlocked.Exchange(ref _foregroundFrame, null);
+            return frame != null;
         }
 
-        private void PrepareNextFrame()
-        {
-            //lock (_nextFrameLock)
-            _nextFrameLock.Wait();
-            {
-                NextFrame();
-            }
-            _nextFrameLock.Release();
-        }
-
-        protected abstract void NextFrame();
+        protected abstract bool NextFrame(PixelBuffer pixels);
 
         protected abstract void SourceChanged();
 
-        protected async void OnSourceChanged()
+        protected void OnSourceChanged()
         {
-            if (AutoPlay || _shouldPlay)
+            var playing = AutoPlay ? _playing != false : _playing == true;
+            if (playing && _active)
             {
-                _shouldPlay = false;
-                Subscribe(true);
+                Play(false);
             }
             else
             {
                 Subscribe(false);
 
-                if (!_unloaded)
+                if (playing && !_unloaded)
                 {
-                    _bitmap = CreateBitmap(CanvasDevice.GetSharedDevice());
-
-                    // Invalidate to render the first frame
-                    await Task.Run(PrepareNextFrame);
-                    DrawFrame();
+                    Display();
                 }
+            }
+        }
+
+        public override async void Display()
+        {
+            if (_bitmapClean && !_unloaded)
+            {
+                await CreateBitmapAsync();
+
+                // Invalidate to render the first frame
+                // Would be nice to move this to IndividualAnimatedImage
+                // but this isn't currently possible
+                await Task.Run(PrepareNextFrame);
+                Invalidate();
             }
         }
 
         public bool Play()
         {
-            Load();
+            return Play(true);
+        }
 
-            var canvas = _canvas;
-            if (canvas == null)
+        private bool Play(bool tryLoad)
+        {
+            _playing = true;
+
+            if (tryLoad)
             {
-                _shouldPlay = true;
-                return false;
+                Load();
             }
 
-            var animation = _animation;
-            if (animation == null)
-            {
-                _shouldPlay = true;
-                return false;
-            }
-
-            _shouldPlay = false;
-
-            if (_subscribed || !_visible)
+            if (_canvas == null || _animation == null || _subscribed || !_active)
             {
                 return false;
             }
 
-            //canvas.Paused = false;
-            Subscribe(true);
+            if (_loaded > 0)
+            {
+                if (tryLoad is false)
+                {
+                    CreateBitmap();
+                }
+
+                Subscribe(true);
+            }
+
             return true;
-            //OnInvalidate();
         }
 
         public void Pause()
@@ -432,12 +597,10 @@ namespace Unigram.Controls
             var canvas = _canvas;
             if (canvas == null)
             {
-                //_source = newValue;
                 return;
             }
 
-            //canvas.Paused = true;
-            //canvas.ResetElapsedTime();
+            _playing = false;
             Subscribe(false);
         }
 
@@ -447,33 +610,56 @@ namespace Unigram.Controls
             {
                 if (Dispatcher.HasThreadAccess)
                 {
-                    if (subscribe)
+                    if (subscribe && _active)
                     {
                         _unsubscribe = false;
-                    }
+                        OnSubscribe(subscribe);
 
-                    _subscribed = subscribe;
-
-                    if (_timer != null)
-                    {
-                        _timer.Cancel();
-                        _timer = null;
-                    }
-
-                    CompositionTarget.Rendering -= OnRendering;
-
-                    if (subscribe)
-                    {
-                        _timer = ThreadPoolTimer.CreatePeriodicTimer(PrepareNextFrame, _interval);
+                        CompositionTarget.Rendering -= OnRendering;
                         CompositionTarget.Rendering += OnRendering;
                     }
+                    else
+                    {
+                        OnSubscribe(subscribe);
+
+                        CompositionTarget.Rendering -= OnRendering;
+                    }
+
+                    _subscribed = subscribe && _active;
                 }
                 else
                 {
-                    _unsubscribe = !subscribe;
+                    if (subscribe)
+                    {
+                        // This theoretically never happens because Subscribe
+                        // never gets invoked from a background thread
+                        return;
+                    }
+
+                    _unsubscribe = true;
+                    OnSubscribe(subscribe);
                 }
             }
         }
+
+        protected void OnSubscribe(bool subscribe)
+        {
+            if (subscribe)
+            {
+                if (_timer == null)
+                {
+                    _timer = LoopThreadPool.Get(_interval);
+                    _timer.Tick += PrepareNextFrame;
+                }
+            }
+            else if (_timer != null)
+            {
+                _timer.Tick -= PrepareNextFrame;
+                _timer = null;
+            }
+        }
+
+        public bool IsPlaying => _subscribed;
 
         #region IsLoopingEnabled
 
@@ -484,11 +670,11 @@ namespace Unigram.Controls
         }
 
         public static readonly DependencyProperty IsLoopingEnabledProperty =
-            DependencyProperty.Register("IsLoopingEnabled", typeof(bool), typeof(AnimatedControl<TSource, TAnimation>), new PropertyMetadata(true, OnLoopingEnabledChanged));
+            DependencyProperty.Register("IsLoopingEnabled", typeof(bool), typeof(AnimatedImage<TAnimation>), new PropertyMetadata(true, OnLoopingEnabledChanged));
 
         private static void OnLoopingEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ((AnimatedControl<TSource, TAnimation>)d)._isLoopingEnabled = (bool)e.NewValue;
+            ((AnimatedImage<TAnimation>)d)._isLoopingEnabled = (bool)e.NewValue;
         }
 
         #endregion
@@ -502,12 +688,21 @@ namespace Unigram.Controls
         }
 
         public static readonly DependencyProperty AutoPlayProperty =
-            DependencyProperty.Register("AutoPlay", typeof(bool), typeof(AnimatedControl<TSource, TAnimation>), new PropertyMetadata(true));
+            DependencyProperty.Register("AutoPlay", typeof(bool), typeof(AnimatedImage<TAnimation>), new PropertyMetadata(true, OnAutoPlayChanged));
+
+        private static void OnAutoPlayChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            ((AnimatedImage<TAnimation>)d).OnAutoPlayChanged((bool)e.NewValue, (bool)e.OldValue);
+        }
+
+        protected virtual void OnAutoPlayChanged(bool newValue, bool oldValue)
+        {
+
+        }
 
         #endregion
 
         #region Stretch
-
 
         public Stretch Stretch
         {
@@ -515,14 +710,8 @@ namespace Unigram.Controls
             set { SetValue(StretchProperty, value); }
         }
 
-        // Using a DependencyProperty as the backing store for Stretch.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty StretchProperty =
-            DependencyProperty.Register("Stretch", typeof(Stretch), typeof(AnimatedControl<TSource, TAnimation>), new PropertyMetadata(Stretch.Uniform, OnStretchChanged));
-
-        private static void OnStretchChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            ((AnimatedControl<TSource, TAnimation>)d)._stretch = (Stretch)e.NewValue;
-        }
+            DependencyProperty.Register("Stretch", typeof(Stretch), typeof(AnimatedImage<TAnimation>), new PropertyMetadata(Stretch.Uniform));
 
         #endregion
     }

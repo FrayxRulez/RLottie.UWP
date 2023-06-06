@@ -1,14 +1,17 @@
-﻿using RLottie;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading.Tasks;
-using Unigram.Controls;
+using System.Threading;
+using Telegram.Controls;
+using Telegram.Streams;
 using Windows.ApplicationModel;
+using Windows.Foundation;
 using Windows.Storage;
-using Windows.Storage.Streams;
+using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
@@ -32,26 +35,64 @@ namespace App1
         public MainPage()
         {
             this.InitializeComponent();
+
+            Loaded += MainPage_Loaded;
         }
 
-        private int index = 0;
-        private string[] _stickers = new string[]
+        private async void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            "12588162597539382",
-            "WalletIntroLoading2",
-            "20264845623217360222"
-        };
+            var file = await Package.Current.InstalledLocation.GetFileAsync("5335006395664179964_102.tgs");
+            var dest = await ApplicationData.Current.LocalFolder.CreateFileAsync("test1.tgs", CreationCollisionOption.ReplaceExisting);
+            await file.CopyAndReplaceAsync(dest);
+            file = await Package.Current.InstalledLocation.GetFileAsync("5335006395664179964.tgs");
+            dest = await ApplicationData.Current.LocalFolder.CreateFileAsync("test2.tgs", CreationCollisionOption.ReplaceExisting);
+            await file.CopyAndReplaceAsync(dest);
+
+            var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, "Files");
+            if (Directory.Exists(path))
+            {
+                var files = Directory.GetFiles(path);
+
+                foreach (var item in files)
+                {
+                    if (item.EndsWith("webp"))
+                    {
+                        _ciao.Add(item);
+                    }
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory(path);
+
+                var files = Directory.GetFiles(Path.Combine(Package.Current.InstalledLocation.Path, "Files"));
+
+                foreach (var item in files)
+                {
+                    _ciao.Add(Path.Combine(path, Path.GetFileName(item)));
+                    File.Copy(item, Path.Combine(path, Path.GetFileName(item)));
+                }
+            }
+        }
+
+        private List<string> _ciao = new();
+
+        private int _index = 0;
 
         private unsafe void Button_Click(object sender, RoutedEventArgs e)
         {
-            var test = new WriteableBitmap(50, 50);
-            var stes = new PixelBuffer(test);
+            foreach (AnimatedImage2 player in Interactions.Children)
+            {
+                //if (player.Source.Contains("test1"))
+                //{
+                //    player.Source = Path.Combine(ApplicationData.Current.LocalFolder.Path, "test2.tgs");
+                //}
+                //else
+                //{
+                //    player.Source = Path.Combine(ApplicationData.Current.LocalFolder.Path, "test1.tgs");
+                //}
+            }
 
-            var asda = (IBufferByteAccess)(IBuffer)stes;
-
-            asda.Buffer(out byte* value);
-
-            var yolo = stes.ToArray();
 
             ////try
             ////{
@@ -117,13 +158,153 @@ namespace App1
             //}
         }
 
-        private void Button2_Click(object sender, RoutedEventArgs e)
+        private int _count;
+
+        private void LayoutUpdated2(object sender, object e)
         {
-            if (Panel.Children.Count > 0)
+            _count++;
+
+            if (_count > 1000)
             {
-                Panel.Children.RemoveAt(0);
+                this.LayoutUpdated -= LayoutUpdated2;
+            }
+            else
+            {
+                Button_Click_1(null, null);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoOptimization)]
+        private async void Button2_Click(object sender, RoutedEventArgs e)
+        {
+            _count = 0;
+            _watch = null;
+            Interactions.Children.Clear();
+            return;
+
+            var bitmap = new WriteableBitmap(512, 512);
+            //var buffer = Telegram.Native.BufferSurface.Create(512 * 512 * 4);
+
+            var bytes = new byte[512 * 512 * 4];
+
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] = (byte)(i % 256);
             }
 
+            var buffer = bytes.AsBuffer();
+
+            var watch = Stopwatch.StartNew();
+
+            for (int i = 0; i < 1_000; i++)
+            {
+                Telegram.Native.BufferSurface.Copy(buffer, bitmap.PixelBuffer);
+            }
+
+            watch.Stop();
+
+            var pixels = bitmap.PixelBuffer.ToArray();
+
+            if (sender is Button button)
+            {
+                button.Content = $"{watch.ElapsedMilliseconds} ms";
+            }
+        }
+
+        private UIElement _temp;
+        private Stopwatch _watch;
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            //if (_temp != null)
+            //{
+            //    Interactions.Children.Add(_temp);
+            //    _temp = null;
+            //    return;
+            //}
+            //else if (Interactions.Children.Count > 0)
+            //{
+            //    _temp = Interactions.Children[0];
+            //    Interactions.Children.Clear();
+            //    return;
+            //}
+
+            var dispatcher = DispatcherQueue.GetForCurrentThread();
+
+            var player = new AnimatedImage2();
+            player.Width = 48;
+            player.Height = 48;
+            player.FrameSize = new Size(48, 48);
+            player.DecodeFrameType = DecodePixelType.Logical;
+            //player.IsFlipped = false;
+            //player.IsLoopingEnabled = true;
+            player.IsHitTestVisible = false;
+            //player.FrameSize = new Size(270 * 2, 270 * 2);
+            player.Source = new LocalFileSource(_ciao[(_index++) % _ciao.Count]); //Path.Combine(ApplicationData.Current.LocalFolder.Path, "test1.tgs");
+            //player.PositionChanged += (s, args) =>
+            //{
+            //    return;
+
+            //    if (args == 1)
+            //    {
+            //        dispatcher.TryEnqueue(() =>
+            //        {
+            //            Interactions.Children.Remove(player);
+            //            InteractionsPopup.IsOpen = false;
+            //        });
+            //    }
+            //};
+
+            var left = 75;
+            var right = 15;
+            var top = 45;
+            var bottom = 45;
+
+            _watch ??= Stopwatch.StartNew();
+
+            //player.Margin = new Thickness(-right, -top, -left, -bottom);
+            player.Loaded += (s, args) =>
+            {
+                _count++;
+                if (_count < 1)
+                {
+                    Button_Click_1(null, null);
+                }
+                else
+                {
+                    _watch.Stop();
+                    Batong.Content = _watch.ElapsedMilliseconds;
+                }
+
+            };
+
+            //player.Play();
+
+            //Interactions.Children.Clear();
+            Interactions.Children.Add(player);
+            InteractionsPopup.IsOpen = true;
+
+            //Interactions.Children.Clear();
+        }
+
+        private void Button3_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (AnimatedImage2 player in Interactions.Children)
+            {
+                player.Play();
+            }
+        }
+
+        private void Button4_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (AnimatedImage2 player in Interactions.Children)
+            {
+                player.Pause();
+            }
+        }
+
+        private void Button5_Click(object sender, RoutedEventArgs e)
+        {
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
