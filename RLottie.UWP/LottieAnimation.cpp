@@ -93,7 +93,7 @@ namespace winrt::RLottie::implementation
         if (info->m_precache)
         {
             info->m_cacheFile = info->m_path;
-            info->m_cacheKey = string_to_unmanaged(info->m_path);
+            info->m_cacheKey = winrt::to_string(info->m_path);
 
             if (hash != 0)
             {
@@ -178,7 +178,7 @@ namespace winrt::RLottie::implementation
     RLottie::LottieAnimation LottieAnimation::LoadFromData(winrt::hstring jsonData, int32_t pixelWidth, int32_t pixelHeight, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier)
     {
         auto info = winrt::make_self<winrt::RLottie::implementation::LottieAnimation>();
-        info->m_data = string_to_unmanaged(jsonData);
+        info->m_data = winrt::to_string(jsonData);
         info->m_pixelWidth = pixelWidth;
         info->m_pixelHeight = pixelHeight;
         info->m_modifier = (rlottie::FitzModifier)modifier;
@@ -198,7 +198,7 @@ namespace winrt::RLottie::implementation
         info->m_precache = precache;
         if (info->m_precache)
         {
-            info->m_cacheKey = string_to_unmanaged(cacheKey);
+            info->m_cacheKey = winrt::to_string(cacheKey);
 
             if (hash != 0)
             {
