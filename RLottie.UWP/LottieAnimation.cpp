@@ -26,7 +26,6 @@
 
 using namespace winrt;
 using namespace winrt::RLottie;
-using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Storage::Streams;
 
@@ -403,24 +402,6 @@ namespace winrt::RLottie::implementation
     {
         uint8_t* pixels = bitmap.data();
         RenderSync(pixels, frame, NULL);
-    }
-
-    void LottieAnimation::RenderSync(CanvasBitmap bitmap, int32_t frame)
-    {
-        auto size = bitmap.SizeInPixels();
-        auto w = size.Width;
-        auto h = size.Height;
-
-        uint8_t* pixels = new uint8_t[w * h * 4];
-        bool rendered;
-        RenderSync(pixels, frame, &rendered);
-
-        if (rendered)
-        {
-            bitmap.SetPixelBytes(winrt::array_view(pixels, w * h * 4));
-        }
-
-        delete[] pixels;
     }
 
     void LottieAnimation::RenderSync(uint8_t* pixels, int32_t frame, bool* rendered)

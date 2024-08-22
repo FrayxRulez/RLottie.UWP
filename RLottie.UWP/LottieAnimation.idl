@@ -24,7 +24,6 @@ namespace RLottie
         void SetColor(Windows.UI.Color color);
 
         [default_overload]
-        void RenderSync(Microsoft.Graphics.Canvas.CanvasBitmap bitmap, Int32 frame);
         void RenderSync(Windows.Storage.Streams.IBuffer bitmap, Int32 frame);
         void RenderSync(String filePath, Int32 frame);
 

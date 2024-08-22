@@ -20,7 +20,6 @@
 
 using namespace concurrency;
 using namespace winrt;
-using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::Graphics;
 using namespace winrt::Windows::UI;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
@@ -60,7 +59,6 @@ namespace winrt::RLottie::implementation
         }
 
         void RenderSync(IBuffer bitmap, int32_t frame) noexcept;
-        void RenderSync(CanvasBitmap bitmap, int32_t frame);
         void RenderSync(hstring filePath, int32_t frame);
 
         void Cache() noexcept;
