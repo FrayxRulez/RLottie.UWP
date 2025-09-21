@@ -25,6 +25,7 @@ namespace RLottie
 
         [default_overload]
         void RenderSync(Windows.Storage.Streams.IBuffer bitmap, Int32 frame);
+        void RenderSync(Microsoft.Graphics.Canvas.CanvasBitmap bitmap, Int32 frame);
         void RenderSync(String filePath, Int32 frame);
 
         void Cache();

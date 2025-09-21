@@ -4,7 +4,13 @@
 
 #include "rlottie.h"
 #include <stack>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+#include <memory>
+#include <map>
 
+#include <winrt/Microsoft.Graphics.Canvas.h>
 #include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
 #define CACHE_QUEUE_SIZE 15
@@ -20,6 +26,7 @@
 
 using namespace concurrency;
 using namespace winrt;
+using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Windows::Graphics;
 using namespace winrt::Windows::UI;
 using namespace winrt::Windows::UI::Xaml::Media::Imaging;
@@ -32,8 +39,6 @@ namespace winrt::RLottie::implementation
     struct LottieAnimation : LottieAnimationT<LottieAnimation>
     {
     public:
-        //static CanvasBitmap LottieAnimation::CreateBitmap(ICanvasResourceCreator resourceCreator, int w, int h);
-
         static RLottie::LottieAnimation LoadFromFile(winrt::hstring filePath, int32_t pixelWidth, int32_t pixelHeight, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier = FitzModifier::None);
         static RLottie::LottieAnimation LoadFromData(winrt::hstring jsonData, int32_t pixelWidth, int32_t pixelHeight, winrt::hstring cacheKey, bool precache, winrt::Windows::Foundation::Collections::IMapView<int32_t, int32_t> colorReplacement, FitzModifier modifier = FitzModifier::None);
 
@@ -59,6 +64,7 @@ namespace winrt::RLottie::implementation
         }
 
         void RenderSync(IBuffer bitmap, int32_t frame) noexcept;
+        void RenderSync(CanvasBitmap bitmap, int32_t frame);
         void RenderSync(hstring filePath, int32_t frame);
 
         void Cache() noexcept;
@@ -81,15 +87,19 @@ namespace winrt::RLottie::implementation
 
         static void CompressThreadProc();
 
+        // Performance-optimized lock management
+        static winrt::slim_mutex& GetLockForKey(const std::string& key);
+
+        static std::mutex s_init_mutex;
+        static std::map<std::string, std::unique_ptr<winrt::slim_mutex>> s_locks;
+
         static winrt::slim_mutex s_compressLock;
         static bool s_compressStarted;
         static std::thread s_compressWorker;
         static WorkQueue s_compressQueue;
 
-        bool m_caching;
-        bool m_readyToCache;
-
-        static std::map<std::string, winrt::slim_mutex> s_locks;
+        bool m_caching = false;
+        bool m_readyToCache = false;
 
         std::unique_ptr<rlottie::Animation> m_animation;
         size_t m_frameCount = 0;
@@ -100,16 +110,16 @@ namespace winrt::RLottie::implementation
         std::wstring m_cacheFile;
         std::string m_data;
         std::string m_cacheKey;
-        uint8_t* m_decompressBuffer = nullptr;
+        uint8_t* m_decompressBuffer = nullptr;  // Raw pointer for performance
         uint32_t m_maxFrameSize = 0;
         uint32_t m_imageSize = 0;
         std::vector<uint32_t> m_fileOffsets;
         std::vector<std::pair<std::uint32_t, std::uint32_t>> m_colors;
-        rlottie::FitzModifier m_modifier;
-        size_t m_pixelWidth;
-        size_t m_pixelHeight;
+        rlottie::FitzModifier m_modifier = rlottie::FitzModifier::None;
+        size_t m_pixelWidth = 0;
+        size_t m_pixelHeight = 0;
 
-        Color m_color;
+        Color m_color = {};
     };
 
     class WorkItem
@@ -120,11 +130,8 @@ namespace winrt::RLottie::implementation
         size_t h;
 
         WorkItem(winrt::weak_ref<LottieAnimation> animation, size_t w, size_t h)
-            : animation(animation),
-            w(w),
-            h(h)
+            : animation(animation), w(w), h(h)
         {
-
         }
     };
 
@@ -141,16 +148,6 @@ namespace winrt::RLottie::implementation
 
             bool was_empty = work.empty();
             work.push(std::move(item));
-
-            //while (CACHE_QUEUE_SIZE < work.size())
-            //{
-            //	WorkItem tmp = std::move(work.front());
-            //	work.pop();
-
-            //	if (auto animation{ tmp.animation.get() }) {
-            //		animation->IsCaching(false);
-            //	}
-            //}
 
             lock.unlock();
 
@@ -174,7 +171,7 @@ namespace winrt::RLottie::implementation
 
             WorkItem tmp = std::move(work.top());
             work.pop();
-            return std::make_optional<WorkItem>(tmp);
+            return std::make_optional<WorkItem>(std::move(tmp));
         }
     };
 }
